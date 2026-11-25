@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>经济-地区生产总值</title>
+<style>
+  :root{
+    --bg:#f4f6fb; --card:#ffffff; --ink:#0f172a; --muted:#64748b;
+    --line:#e5e9f2; --brand:#132a6b; --accent:#2563eb; --accent2:#f59e0b;
+    --accent-soft:#dbeafe; --radius:14px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei","PingFang SC",sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  header{
+    background:linear-gradient(120deg,#0b1736 0%,#152c6b 55%,#1e46a8 100%);
+    color:#fff; padding:28px 32px 22px;
+  }
+  header h1{margin:0;font-size:26px;letter-spacing:.5px;font-weight:700}
+  header h1 span{color:#93c5fd;font-weight:400;margin-left:6px}
+  header p{margin:8px 0 0;color:#c7d6f5;font-size:13.5px}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 24px}
+  .tabs{display:flex;gap:6px;margin:18px 0 20px;background:#e9edf6;padding:5px;border-radius:12px;width:fit-content}
+  .tabs button{
+    border:0;background:transparent;padding:9px 20px;border-radius:9px;cursor:pointer;
+    font-size:14px;color:#475569;font-weight:600;transition:.18s;
+  }
+  .tabs button.active{background:#fff;color:var(--brand);box-shadow:0 1px 4px rgba(15,23,42,.12)}
+  .panel{display:none}
+  .panel.active{display:block}
+  .card{background:var(--card);border-radius:var(--radius);box-shadow:0 1px 3px rgba(15,23,42,.07);border:1px solid #eef1f7}
+  .controls{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end;padding:18px 20px}
+  .field{display:flex;flex-direction:column;gap:6px}
+  .field label{font-size:12px;color:var(--muted);font-weight:600;letter-spacing:.5px}
+  select{
+    appearance:none;background:#f8fafc url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12'><path d='M2 4l4 4 4-4' fill='none' stroke='%2364748b' stroke-width='1.6'/></svg>") no-repeat right 12px center;
+    border:1px solid #dbe2ee;border-radius:9px;padding:10px 34px 10px 12px;font-size:14px;color:var(--ink);
+    min-width:190px;cursor:pointer;outline:none;
+  }
+  select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,.12)}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin:16px 0}
+  .stat{background:#fff;border-radius:var(--radius);padding:16px 18px;border:1px solid #eef1f7;box-shadow:0 1px 3px rgba(15,23,42,.06)}
+  .stat .k{font-size:12px;color:var(--muted);font-weight:600}
+  .stat .v{font-size:24px;font-weight:700;margin-top:6px;letter-spacing:.3px}
+  .stat .v small{font-size:13px;font-weight:500;color:var(--muted);margin-left:4px}
+  .stat .s{font-size:12px;color:#94a3b8;margin-top:4px}
+  .card-head{display:flex;justify-content:space-between;align-items:baseline;padding:16px 20px 0}
+  .card-head h2{margin:0;font-size:15px;font-weight:700}
+  .card-head .hint{font-size:12px;color:var(--muted)}
+  .chart-box{padding:6px 14px 14px}
+  canvas{display:block;width:100%;height:380px}
+  .legend{display:flex;gap:18px;padding:2px 22px 0;font-size:13px;color:#475569;flex-wrap:wrap}
+  .legend i{display:inline-block;width:12px;height:3px;border-radius:2px;margin-right:7px;vertical-align:middle}
+  .table-wrap{padding:6px 20px 20px}
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  thead th{
+    position:sticky;top:0;background:#f8fafc;color:#475569;font-weight:600;text-align:right;
+    padding:10px 12px;border-bottom:1px solid var(--line);font-size:12.5px;z-index:2;
+  }
+  thead th:first-child{text-align:left}
+  tbody td{padding:8px 12px;text-align:right;border-bottom:1px solid #f1f4f9;font-variant-numeric:tabular-nums}
+  tbody td:first-child{text-align:left;color:#334155}
+  tbody tr:hover td{background:#f8fbff}
+  .scroll{max-height:430px;overflow:auto;border:1px solid #eef1f7;border-radius:12px}
+  .muted{color:#94a3b8}
+  .headline{padding:18px 22px;background:linear-gradient(100deg,#eef4ff,#f8fbff);border-bottom:1px solid #e6edfb}
+  .headline .big{font-size:15px;line-height:1.9;color:#1e293b}
+  .headline b{color:var(--brand);font-size:17px}
+  .headline .ratio{display:inline-block;margin:0 4px;padding:2px 10px;border-radius:999px;background:#fff;border:1px solid #dbe6fb;color:#1d4ed8;font-weight:700}
+  .cmp-controls{display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:18px 20px}
+  .cmp-box{border:1px solid #eef1f7;border-radius:12px;padding:14px;background:#fbfcff}
+  .cmp-box .tag{display:inline-block;font-size:12px;font-weight:700;color:#fff;border-radius:6px;padding:2px 8px;margin-bottom:10px}
+  .cmp-box.a .tag{background:var(--accent)}
+  .cmp-box.b .tag{background:var(--accent2)}
+  .cmp-box .row{display:flex;gap:10px;flex-wrap:wrap}
+  .cmp-box select{min-width:150px;background-color:#fff}
+  .toolbar{display:flex;gap:12px;align-items:center;padding:16px 20px;flex-wrap:wrap}
+  .search{border:1px solid #dbe2ee;border-radius:9px;padding:10px 14px;font-size:14px;min-width:260px;outline:none}
+  .search:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,.12)}
+  .btn{border:1px solid #dbe2ee;background:#fff;border-radius:8px;padding:7px 12px;font-size:12.5px;cursor:pointer;color:#334155}
+  .btn:hover{border-color:#b6c6e6;color:var(--brand)}
+  .tier + .tier{border-top:1px solid #eef1f7}
+  .tier-head{display:flex;align-items:baseline;gap:10px;padding:18px 20px 8px}
+  .tier-head h2{margin:0;font-size:15px;letter-spacing:.4px}
+  .tier-head .cnt{font-size:12.5px;color:#1d4ed8;background:#eef4ff;border-radius:999px;padding:1px 9px;font-weight:600}
+  .tier-head .desc{font-size:12px;color:#94a3b8}
+  .pill{display:inline-block;padding:1px 8px;border-radius:999px;background:#eef2fa;color:#475569;font-size:11.5px}
+  #tooltip{
+    position:fixed;pointer-events:none;background:#0f172a;color:#fff;font-size:12.5px;line-height:1.7;
+    padding:9px 12px;border-radius:9px;opacity:0;transition:opacity .12s;z-index:99;white-space:nowrap;
+    box-shadow:0 8px 24px rgba(15,23,42,.25);
+  }
+  .foot{color:#94a3b8;font-size:12px;padding:26px 4px 40px;line-height:1.8}
+  @media (max-width:820px){
+    .cmp-controls{grid-template-columns:1fr}
+    header{padding:22px 18px 18px}
+    .wrap{padding:0 14px}
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>经济<span>·</span>地区生产总值</h1>
+  <p>全国 335 个地级行政区 · 31 个省级地区 · 1978–2025 年 GDP 数据</p>
+</header>
+
+<div class="wrap">
+  <div class="tabs">
+    <button data-tab="single" class="active">单地区趋势</button>
+    <button data-tab="compare">两地区对比</button>
+    <button data-tab="all">全部地区</button>
+  </div>
+
+  <!-- 单地区 -->
+  <section class="panel active" id="panel-single">
+    <div class="card">
+      <div class="controls">
+        <div class="field"><label>省份 / 地区</label><select id="s-prov"></select></div>
+        <div class="field"><label>城市 / 地区</label><select id="s-region"></select></div>
+      </div>
+    </div>
+    <div class="stats" id="s-stats"></div>
+    <div class="card">
+      <div class="card-head"><h2>GDP 走势</h2><span class="hint">单位：亿元 · 悬停查看各年数据</span></div>
+      <div class="chart-box"><canvas id="s-chart"></canvas></div>
+      <div class="legend" id="s-legend"></div>
+      <div class="table-wrap">
+        <div class="scroll">
+          <table id="s-table">
+            <thead><tr><th>年份</th><th>GDP(亿元)</th><th>增量(亿元)</th><th>名义增长率</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 对比 -->
+  <section class="panel" id="panel-compare">
+    <div class="card">
+      <div class="cmp-controls">
+        <div class="cmp-box a">
+          <span class="tag">地区 A</span>
+          <div class="row">
+            <select id="a-prov"></select>
+            <select id="a-region"></select>
+          </div>
+        </div>
+        <div class="cmp-box b">
+          <span class="tag">地区 B</span>
+          <div class="row">
+            <select id="b-prov"></select>
+            <select id="b-region"></select>
+          </div>
+        </div>
+      </div>
+      <div class="headline"><div class="big" id="c-headline"></div></div>
+      <div class="chart-box"><canvas id="c-chart"></canvas></div>
+      <div class="legend" id="c-legend"></div>
+      <div class="table-wrap">
+        <div class="scroll">
+          <table id="c-table">
+            <thead><tr><th>年份</th><th class="a-col">A GDP(亿元)</th><th class="b-col">B GDP(亿元)</th><th>A 占 B</th><th>A 增长率</th><th>B 增长率</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 全部 -->
+  <section class="panel" id="panel-all">
+    <div class="card">
+      <div class="toolbar">
+        <input class="search" id="all-search" placeholder="搜索城市或省份，如：苏州、广东">
+        <span class="hint" id="all-count"></span>
+      </div>
+      <div id="all-tiers"></div>
+    </div>
+  </section>
+
+  <div class="foot">
+    数据来源：国家统计局及各地区统计局，可能会有四舍五入的情况；空值统一标注「未公开」。<br>
+    说明：GDP 单位为亿元，名义增长率为当年相对上年的名义增速；两地区对比中的“A 占 B”为同年 A 的 GDP 除以 B 的 GDP。<br>
+    覆盖范围：不含港澳台地区及新疆生产建设兵团。
+  </div>
+</div>
+
+<div id="tooltip"></div>
+
+<script>
+const DATA = __DATA__;
+</script>
+<script>
+(function(){
+  "use strict";
+
+  const REGIONS = DATA.slice();
+  const byId = new Map(REGIONS.map(r => [r.id, r]));
+
+  const PROV_ORDER = ["河北","山西","内蒙古","辽宁","吉林","黑龙江","江苏","浙江","安徽","福建","江西","山东",
+                      "河南","湖北","湖南","广东","广西","海南","四川","贵州","云南","西藏","陕西","甘肃","青海","宁夏","新疆"];
+  const PROV_FULL = {河北:"河北省",山西:"山西省",内蒙古:"内蒙古自治区",辽宁:"辽宁省",吉林:"吉林省",
+    黑龙江:"黑龙江省",江苏:"江苏省",浙江:"浙江省",安徽:"安徽省",福建:"福建省",江西:"江西省",
+    山东:"山东省",河南:"河南省",湖北:"湖北省",湖南:"湖南省",广东:"广东省",广西:"广西壮族自治区",
+    海南:"海南省",四川:"四川省",贵州:"贵州省",云南:"云南省",西藏:"西藏自治区",陕西:"陕西省",
+    甘肃:"甘肃省",青海:"青海省",宁夏:"宁夏回族自治区",新疆:"新疆维吾尔自治区"};
+
+  const EL = {
+    sProv: document.getElementById('s-prov'), sRegion: document.getElementById('s-region'),
+    sStats: document.getElementById('s-stats'), sChart: document.getElementById('s-chart'),
+    sLegend: document.getElementById('s-legend'), sTable: document.querySelector('#s-table tbody'),
+    aProv: document.getElementById('a-prov'), aRegion: document.getElementById('a-region'),
+    bProv: document.getElementById('b-prov'), bRegion: document.getElementById('b-region'),
+    cHead: document.getElementById('c-headline'), cChart: document.getElementById('c-chart'),
+    cLegend: document.getElementById('c-legend'), cTable: document.querySelector('#c-table tbody'),
+    allSearch: document.getElementById('all-search'), allCount: document.getElementById('all-count'),
+    allTiers: document.getElementById('all-tiers'),
+    tooltip: document.getElementById('tooltip')
+  };
+
+  /* ---------- 地区分组 ---------- */
+  const nat = REGIONS.filter(r => r.kind === 'national');
+  const china = nat.find(r => r.id === '中国');
+  const munis = nat.filter(r => r.id !== '中国');
+  const provRows = {};
+  REGIONS.filter(r => r.kind === 'province').forEach(r => { provRows[r.province] = r; });
+  const cityRows = {};
+  REGIONS.filter(r => r.kind === 'city').forEach(r => {
+    (cityRows[r.province] = cityRows[r.province] || []).push(r);
+  });
+
+  const GROUPS = [];
+  if (china) GROUPS.push({ key: "全国", label: "全国", items: [china] });
+  munis.forEach(m => GROUPS.push({ key: m.id, label: m.label, items: [m] }));
+  PROV_ORDER.forEach(p => {
+    const items = [];
+    if (provRows[p]) items.push(provRows[p]);
+    (cityRows[p] || []).forEach(c => items.push(c));
+    if (items.length) GROUPS.push({ key: p, label: PROV_FULL[p] || p, items: items });
+  });
+
+  const groupByKey = new Map(GROUPS.map(g => [g.key, g]));
+
+  /* ---------- 工具 ---------- */
+  function fmt(n, d){
+    if (n === null || n === undefined || isNaN(n)) return "—";
+    return Number(n).toLocaleString('zh-CN', {minimumFractionDigits: d === undefined ? 1 : d, maximumFractionDigits: d === undefined ? 1 : d});
+  }
+  function fmtRate(v){
+    if (v === null || v === undefined || isNaN(v)) return "—";
+    return (v * 100).toFixed(2) + "%";
+  }
+  function seriesMap(r){
+    const m = new Map();
+    r.series.forEach(row => m.set(row[0], { gdp: row[1], inc: row[2], rate: row[3] }));
+    return m;
+  }
+  function statOf(r){
+    const rows = r.series.filter(x => x[1] !== null && x[1] !== undefined);
+    if (!rows.length) return null;
+    const last = rows[0];
+    const first = rows[rows.length - 1];
+    return { year: last[0], gdp: last[1], inc: last[2], rate: last[3], firstYear: first[0], count: rows.length };
+  }
+  function displayName(r){
+    if (r.kind === 'province') return PROV_FULL[r.province] || r.label;
+    return r.label;
+  }
+  function provLabelOf(r){
+    if (r.kind === 'national') return r.id === '中国' ? '全国' : r.label;
+    return PROV_FULL[r.province] || r.province;
+  }
+  function regionLabel(r){ return r.kind === 'national' ? r.label : displayName(r); }
+  function locLabel(r){
+    const p = provLabelOf(r), n = regionLabel(r);
+    return p === n ? n : n + "（" + p + "）";
+  }
+
+  /* ---------- 下拉框 ---------- */
+  function fillProv(sel, selectedKey){
+    sel.innerHTML = "";
+    GROUPS.forEach(g => {
+      const o = document.createElement('option');
+      o.value = g.key; o.textContent = g.label;
+      sel.appendChild(o);
+    });
+    if (selectedKey) sel.value = selectedKey;
+  }
+  function fillRegion(sel, groupKey, selectedId){
+    const g = groupByKey.get(groupKey);
+    sel.innerHTML = "";
+    if (!g) return;
+    g.items.forEach(r => {
+      const o = document.createElement('option');
+      o.value = r.id;
+      o.textContent = (r.kind === 'province') ? (displayName(r) + "（全省）") : regionLabel(r);
+      sel.appendChild(o);
+    });
+    if (selectedId && g.items.some(r => r.id === selectedId)) sel.value = selectedId;
+  }
+
+  /* ---------- 图表 ---------- */
+  const charts = new Map();
+  function niceScale(maxV){
+    const target = maxV * 1.06;
+    if (target <= 0) return { top: 10, step: 2 };
+    const base = Math.pow(10, Math.floor(Math.log10(target)));
+    const cands = [0.5, 1, 2, 2.5, 5, 10].map(x => x * base);
+    for (const d of cands) {
+      const top = Math.ceil(target / d) * d;
+      if (top / d <= 5) return { top: top, step: d };
+    }
+    return { top: base * 10, step: base * 2 };
+  }
+  function fmtAxis(v){
+    if (v >= 10000) {
+      const w = v / 10000;
+      return (Math.abs(w - Math.round(w)) < 1e-6 ? String(Math.round(w)) : w.toFixed(1)) + "万";
+    }
+    return Math.round(v).toLocaleString('zh-CN');
+  }
+  function drawChart(canvas, seriesList, opt){
+    opt = opt || {};
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    const W = Math.max(320, rect.width), H = Math.max(200, rect.height);
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, W, H);
+
+    const padL = 68, padR = 18, padT = 16, padB = 34;
+    const iw = W - padL - padR, ih = H - padT - padB;
+
+    let years = [];
+    let maxV = 0;
+    seriesList.forEach(s => s.points.forEach(p => {
+      if (p[1] !== null && p[1] !== undefined) { years.push(p[0]); if (p[1] > maxV) maxV = p[1]; }
+    }));
+    if (!years.length) {
+      ctx.fillStyle = "#94a3b8"; ctx.font = "13px system-ui"; ctx.textAlign = "center";
+      ctx.fillText("暂无数据", W / 2, H / 2); return;
+    }
+    const y0 = Math.min.apply(null, years), y1 = Math.max.apply(null, years);
+    const sc = niceScale(maxV);
+    const yTop = sc.top, yStep = sc.step;
+    const xOf = y => padL + (y1 === y0 ? iw / 2 : (y - y0) / (y1 - y0) * iw);
+    const yOf = v => padT + ih - (v / yTop) * ih;
+
+    // grid + y labels
+    ctx.font = "11.5px system-ui"; ctx.textAlign = "right"; ctx.textBaseline = "middle";
+    for (let v = 0; v <= yTop + 1e-6; v += yStep) {
+      const y = yOf(v);
+      ctx.strokeStyle = v === 0 ? "#cbd5e1" : "#eef1f7";
+      ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(W - padR, y); ctx.stroke();
+      ctx.fillStyle = "#94a3b8";
+      ctx.fillText(fmtAxis(v), padL - 10, y);
+    }
+    // x labels
+    ctx.textAlign = "center"; ctx.textBaseline = "top"; ctx.fillStyle = "#94a3b8";
+    const span = y1 - y0;
+    const step = span > 40 ? 10 : span > 20 ? 5 : span > 10 ? 2 : 1;
+    const tickYears = [];
+    for (let y = Math.ceil(y0 / step) * step; y <= y1; y += step) tickYears.push(y);
+    if (!tickYears.length) { tickYears.push(y0); if (y1 !== y0) tickYears.push(y1); }
+    tickYears.forEach(y => ctx.fillText(String(y), xOf(y), padT + ih + 10));
+
+    // lines
+    seriesList.forEach(s => {
+      ctx.strokeStyle = s.color; ctx.lineWidth = 2.2; ctx.lineJoin = "round"; ctx.lineCap = "round";
+      let started = false;
+      ctx.beginPath();
+      s.points.forEach(p => {
+        if (p[1] === null || p[1] === undefined) { started = false; return; }
+        const x = xOf(p[0]), y = yOf(p[1]);
+        if (!started) { ctx.moveTo(x, y); started = true; } else { ctx.lineTo(x, y); }
+      });
+      ctx.stroke();
+      // points
+      ctx.fillStyle = s.color;
+      s.points.forEach(p => {
+        if (p[1] === null || p[1] === undefined) return;
+        if (y1 - y0 > 30 && p[0] % 5 !== 0 && p[0] !== y1) return;
+        ctx.beginPath(); ctx.arc(xOf(p[0]), yOf(p[1]), 2.4, 0, Math.PI * 2); ctx.fill();
+      });
+    });
+
+    charts.set(canvas, { seriesList, xOf, yOf, y0, y1, padL, padR, padT, padB, iw, ih, W, H, opt });
+  }
+
+  function showTooltip(canvas, ev){
+    const st = charts.get(canvas);
+    if (!st) return;
+    const rect = canvas.getBoundingClientRect();
+    const x = ev.clientX - rect.left;
+    if (x < st.padL || x > st.padL + st.iw) { EL.tooltip.style.opacity = 0; return; }
+    const yearF = st.y0 + (x - st.padL) / st.iw * (st.y1 - st.y0);
+    const year = Math.round(yearF);
+    let html = "<b>" + year + " 年</b>";
+    let any = false;
+    st.seriesList.forEach(s => {
+      const p = s.points.find(q => q[0] === year);
+      if (p && p[1] !== null && p[1] !== undefined) {
+        any = true;
+        html += "<br><span style='color:" + s.color + "'>●</span> " + s.name + "：" + fmt(p[1], 1) + " 亿元";
+      } else {
+        html += "<br><span style='color:#64748b'>●</span> " + s.name + "：未公开";
+      }
+    });
+    if (!any) { EL.tooltip.style.opacity = 0; return; }
+    EL.tooltip.innerHTML = html;
+    EL.tooltip.style.opacity = 1;
+    const tx = Math.min(window.innerWidth - 200, ev.clientX + 14);
+    EL.tooltip.style.left = tx + "px";
+    EL.tooltip.style.top = (ev.clientY + 16) + "px";
+  }
+
+  [EL.sChart, EL.cChart].forEach(cv => {
+    cv.addEventListener('mousemove', e => showTooltip(cv, e));
+    cv.addEventListener('mouseleave', () => { EL.tooltip.style.opacity = 0; });
+  });
+
+  /* ---------- 单地区 ---------- */
+  function renderSingle(){
+    const gk = EL.sProv.value, rid = EL.sRegion.value;
+    const r = byId.get(rid);
+    if (!r) return;
+    const st = statOf(r);
+    const rows = r.series.slice().sort((a, b) => b[0] - a[0]);
+    EL.sStats.innerHTML = "";
+    let cards = [];
+    if (st) {
+      cards = [
+        { k: st.year + " 年 GDP", v: fmt(st.gdp, 1), u: "亿元", s: (provLabelOf(r) === regionLabel(r) ? regionLabel(r) : provLabelOf(r) + " · " + regionLabel(r)) },
+        { k: "较上年增量", v: (st.inc === null || st.inc === undefined) ? "—" : (st.inc >= 0 ? "+" : "") + fmt(st.inc, 1), u: "亿元", s: "名义口径" },
+        { k: "名义增长率", v: fmtRate(st.rate), u: "", s: st.year + " 年同比" },
+        { k: "数据区间", v: st.firstYear + "–" + st.year, u: "", s: "共 " + st.count + " 年有数据" }
+      ];
+    } else {
+      cards = [{ k: "数据", v: "暂无", u: "", s: "" }];
+    }
+    cards.forEach(c => {
+      const d = document.createElement('div');
+      d.className = "stat";
+      d.innerHTML = "<div class='k'>" + c.k + "</div><div class='v'>" + c.v + (c.u ? "<small>" + c.u + "</small>" : "") + "</div><div class='s'>" + c.s + "</div>";
+      EL.sStats.appendChild(d);
+    });
+
+    EL.sTable.innerHTML = rows.map(row => {
+      const g = row[1], inc = row[2], rate = row[3];
+      return "<tr><td>" + row[0] + "</td><td>" + (g === null ? "<span class='muted'>未公开</span>" : fmt(g, 1)) +
+        "</td><td>" + (inc === null ? "<span class='muted'>—</span>" : ((inc >= 0 ? "+" : "") + fmt(inc, 1))) +
+        "</td><td>" + (rate === null ? "<span class='muted'>—</span>" : fmtRate(rate)) + "</td></tr>";
+    }).join("");
+
+    const points = r.series.map(x => [x[0], x[1]]).sort((a, b) => a[0] - b[0]);
+    drawChart(EL.sChart, [{ name: regionLabel(r), color: "#2563eb", points: points }], {});
+    EL.sLegend.innerHTML = "<span><i style='background:#2563eb'></i>" + locLabel(r) + " GDP</span>";
+  }
+
+  /* ---------- 对比 ---------- */
+  function renderCompare(){
+    const a = byId.get(EL.aRegion.value), b = byId.get(EL.bRegion.value);
+    if (!a || !b) return;
+    const ma = seriesMap(a), mb = seriesMap(b);
+    const years = Array.from(new Set([].concat(Array.from(ma.keys()), Array.from(mb.keys())))).sort((x, y) => y - x);
+
+    // headline: latest year where both have data
+    let hy = null;
+    for (const y of years) {
+      const x = ma.get(y), z = mb.get(y);
+      if (x && z && x.gdp !== null && z.gdp !== null) { hy = y; break; }
+    }
+    if (hy !== null) {
+      const av = ma.get(hy).gdp, bv = mb.get(hy).gdp;
+      const pct = bv ? (av / bv * 100) : null;
+      let extra = "";
+      if (pct !== null) {
+        if (pct >= 100) extra = "，即 " + regionLabel(a) + " 是 " + regionLabel(b) + " 的 " + (pct / 100).toFixed(2) + " 倍";
+        else extra = "，即 " + regionLabel(b) + " 是 " + regionLabel(a) + " 的 " + (100 / pct).toFixed(2) + " 倍";
+      }
+      EL.cHead.innerHTML = hy + " 年，<b>" + regionLabel(a) + "</b> 的 GDP 为 " + fmt(av, 1) + " 亿元，相当于 <b>" +
+        regionLabel(b) + "</b>（" + fmt(bv, 1) + " 亿元）的 <span class='ratio'>" + (pct === null ? "—" : pct.toFixed(1) + "%") +
+        "</span>" + extra + "。";
+    } else {
+      EL.cHead.textContent = "两个地区没有重叠年份的可比数据。";
+    }
+
+    const pa = a.series.map(x => [x[0], x[1]]).sort((p, q) => p[0] - q[0]);
+    const pb = b.series.map(x => [x[0], x[1]]).sort((p, q) => p[0] - q[0]);
+    drawChart(EL.cChart, [
+      { name: regionLabel(a), color: "#2563eb", points: pa },
+      { name: regionLabel(b), color: "#f59e0b", points: pb }
+    ], {});
+    EL.cLegend.innerHTML = "<span><i style='background:#2563eb'></i>A：" + locLabel(a) + "</span>" +
+      "<span><i style='background:#f59e0b'></i>B：" + locLabel(b) + "</span>";
+
+    EL.cTable.innerHTML = years.map(y => {
+      const x = ma.get(y) || {}, z = mb.get(y) || {};
+      const g1 = x.gdp, g2 = z.gdp;
+      const ratio = (g1 !== null && g1 !== undefined && g2) ? (g1 / g2 * 100).toFixed(1) + "%" : "—";
+      return "<tr><td>" + y + "</td>" +
+        "<td>" + (g1 === null || g1 === undefined ? "<span class='muted'>未公开</span>" : fmt(g1, 1)) + "</td>" +
+        "<td>" + (g2 === null || g2 === undefined ? "<span class='muted'>未公开</span>" : fmt(g2, 1)) + "</td>" +
+        "<td><b>" + ratio + "</b></td>" +
+        "<td>" + (x.rate === null || x.rate === undefined ? "<span class='muted'>—</span>" : fmtRate(x.rate)) + "</td>" +
+        "<td>" + (z.rate === null || z.rate === undefined ? "<span class='muted'>—</span>" : fmtRate(z.rate)) + "</td></tr>";
+    }).join("");
+  }
+
+  /* ---------- 全部地区 ---------- */
+  const allRows = REGIONS.map(r => {
+    const st = statOf(r);
+    return { r, st };
+  }).sort((x, y) => (y.st ? y.st.gdp : -1) - (x.st ? x.st.gdp : -1));
+
+  const TIERS = [
+    { key: "nation", title: "全国", note: "国家级总量", test: r => r.kind === "national" && r.id === "中国" },
+    { key: "prov", title: "省级", note: "省级行政区（含 4 个直辖市）　·　按汉语拼音首字母排序", test: r => r.kind === "province" || (r.kind === "national" && r.id !== "中国") },
+    { key: "city", title: "市级", note: "地级行政区　·　按汉语拼音首字母排序", test: r => r.kind === "city" }
+  ];
+
+  function rowHtml(o, showProv){
+    const r = o.r, st = o.st;
+    const prev = r.series.find(x => st && x[0] === st.year - 1);
+    return "<tr><td>" + regionLabel(r) + "</td>" +
+      (showProv ? "<td>" + provLabelOf(r) + "</td>" : "") +
+      "<td>" + (st ? fmt(st.gdp, 1) : "—") + "</td>" +
+      "<td>" + (prev && prev[1] !== null ? fmt(prev[1], 1) : "—") + "</td>" +
+      "<td>" + (st ? fmtRate(st.rate) : "—") + "</td>" +
+      "<td><button class='btn' data-single='" + r.id + "'>看趋势</button></td></tr>";
+  }
+
+  function renderAll(){
+    const q = (EL.allSearch.value || "").trim();
+    const matched = allRows.filter(o => !q || regionLabel(o.r).indexOf(q) >= 0 || provLabelOf(o.r).indexOf(q) >= 0);
+    EL.allCount.textContent = q ? ("匹配 " + matched.length + " 个地区") : ("共 " + allRows.length + " 个地区");
+
+    const html = TIERS.map(t => {
+      let list = matched.filter(o => t.test(o.r));
+      if (!list.length) return "";
+      if (t.key !== "nation") {
+        list = list.slice().sort((a, b) => regionLabel(a.r).localeCompare(regionLabel(b.r), "zh-Hans-CN"));
+      }
+      const showProv = t.key === "city";
+      const h = t.key === "prov" ? "max-height:640px" : (t.key === "city" ? "max-height:700px" : "");
+      return "<div class='tier'><div class='tier-head'><h2>" + t.title + "</h2>" +
+        "<span class='cnt'>" + list.length + " 个</span><span class='desc'>" + t.note + "</span></div>" +
+        "<div class='table-wrap'><div class='scroll' style='" + h + "'><table>" +
+        "<thead><tr><th>地区</th>" + (showProv ? "<th>省份</th>" : "") +
+        "<th>2025 GDP(亿元)</th><th>2024 GDP(亿元)</th><th>名义增长率</th><th></th></tr></thead>" +
+        "<tbody>" + list.map(o => rowHtml(o, showProv)).join("") + "</tbody></table></div></div></div>";
+    }).join("");
+
+    EL.allTiers.innerHTML = html || "<div style='padding:48px;text-align:center;color:#94a3b8;font-size:14px'>没有匹配的地区</div>";
+  }
+  function openSingle(id){
+    const r = byId.get(id);
+    if (!r) return;
+    let gk;
+    if (r.kind === "national") gk = (r.id === "中国") ? "全国" : r.id;
+    else gk = r.province;
+    if (!groupByKey.has(gk)) return;
+    EL.sProv.value = gk;
+    fillRegion(EL.sRegion, gk, r.id);
+    switchTab("single");
+    renderSingle();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  EL.allTiers.addEventListener('click', e => {
+    const btn = e.target.closest('button[data-single]');
+    if (!btn) return;
+    openSingle(btn.getAttribute('data-single'));
+  });
+  EL.allSearch.addEventListener('input', renderAll);
+
+  /* ---------- 事件 ---------- */
+  function switchTab(name){
+    document.querySelectorAll('.tabs button').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+    document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + name));
+    if (name === 'single') setTimeout(renderSingle, 0);
+    if (name === 'compare') setTimeout(renderCompare, 0);
+  }
+  document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => switchTab(b.dataset.tab)));
+
+  EL.sProv.addEventListener('change', () => { fillRegion(EL.sRegion, EL.sProv.value); renderSingle(); });
+  EL.sRegion.addEventListener('change', renderSingle);
+  EL.aProv.addEventListener('change', () => { fillRegion(EL.aRegion, EL.aProv.value); renderCompare(); });
+  EL.bProv.addEventListener('change', () => { fillRegion(EL.bRegion, EL.bProv.value); renderCompare(); });
+  EL.aRegion.addEventListener('change', renderCompare);
+  EL.bRegion.addEventListener('change', renderCompare);
+
+  window.addEventListener('resize', () => {
+    if (document.getElementById('panel-single').classList.contains('active')) renderSingle();
+    if (document.getElementById('panel-compare').classList.contains('active')) renderCompare();
+  });
+
+  /* ---------- 初始化 ---------- */
+  const cityCount = REGIONS.filter(r => r.kind === 'city').length + munis.length;
+  const provCount = REGIONS.filter(r => r.kind === 'province').length + munis.length;
+  const sub = document.querySelector('header p');
+  if (sub) sub.textContent = "全国 " + cityCount + " 个城市/地区 · " + provCount + " 个省级单位 · 1978–2025 年 GDP 数据";
+
+  fillProv(EL.sProv, "广东");
+  fillRegion(EL.sRegion, "广东", "广东/深圳");
+  fillProv(EL.aProv, "广东"); fillRegion(EL.aRegion, "广东", "广东/深圳");
+  fillProv(EL.bProv, "广东"); fillRegion(EL.bRegion, "广东", "广东/广州");
+  renderSingle();
+  renderCompare();
+  renderAll();
+
+  const hash = decodeURIComponent((location.hash || "").replace(/^#/, ""));
+  if (hash.indexOf("single/") === 0) {
+    openSingle(hash.slice(7));
+  } else if (hash === "compare" || hash === "all" || hash === "single") {
+    switchTab(hash);
+  }
+})();
+</script>
+</body>
+</html>
