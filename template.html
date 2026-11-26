@@ -132,7 +132,7 @@
       <div class="table-wrap">
         <div class="scroll">
           <table id="s-table">
-            <thead><tr><th>年份</th><th>GDP(亿元)</th><th>增量(亿元)</th><th>名义增长率</th></tr></thead>
+            <thead><tr><th>年份</th><th>GDP(亿元)</th><th>全国排名</th><th>增量(亿元)</th><th>名义增长率</th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
@@ -277,6 +277,37 @@ const DATA = __DATA__;
     return PROV_FULL[r.province] || r.province;
   }
   function regionLabel(r){ return r.kind === 'national' ? r.label : displayName(r); }
+
+  /* ---------- 全国排名（同层级、同年度） ---------- */
+  const CITY_POOL = REGIONS.filter(r => r.kind === 'city' || (r.kind === 'national' && r.id !== '中国'));
+  const PROV_POOL = REGIONS.filter(r => r.kind === 'province' || (r.kind === 'national' && r.id !== '中国'));
+  function poolKey(r){
+    if (r.kind === 'province') return 'prov';
+    if (r.kind === 'city') return 'city';
+    if (r.kind === 'national' && r.id !== '中国') return 'city';
+    return null;
+  }
+  const RANK_POOL = { city: CITY_POOL, prov: PROV_POOL };
+  const RANK_BY_YEAR = { city: new Map(), prov: new Map() };
+  Object.keys(RANK_POOL).forEach(k => {
+    RANK_POOL[k].forEach(r => r.series.forEach(row => {
+      const v = row[1];
+      if (v === null || v === undefined) return;
+      if (!RANK_BY_YEAR[k].has(row[0])) RANK_BY_YEAR[k].set(row[0], []);
+      RANK_BY_YEAR[k].get(row[0]).push(v);
+    }));
+    RANK_BY_YEAR[k].forEach(arr => arr.sort((a, b) => b - a));
+  });
+  function poolSize(r){ const k = poolKey(r); return k ? RANK_POOL[k].length : 0; }
+  function rankOf(r, year, gdp){
+    const k = poolKey(r);
+    if (!k || gdp === null || gdp === undefined) return null;
+    const arr = RANK_BY_YEAR[k].get(year);
+    if (!arr) return null;
+    let better = 0;
+    for (let i = 0; i < arr.length; i++) { if (arr[i] > gdp + 1e-9) better++; }
+    return better + 1;
+  }
   function locLabel(r){
     const p = provLabelOf(r), n = regionLabel(r);
     return p === n ? n : n + "（" + p + "）";
@@ -436,9 +467,12 @@ const DATA = __DATA__;
     const rows = r.series.slice().sort((a, b) => b[0] - a[0]);
     EL.sStats.innerHTML = "";
     let cards = [];
+    const rk = st ? rankOf(r, st.year, st.gdp) : null;
+    const psz = poolSize(r);
     if (st) {
       cards = [
         { k: st.year + " 年 GDP", v: fmt(st.gdp, 1), u: "亿元", s: (provLabelOf(r) === regionLabel(r) ? regionLabel(r) : provLabelOf(r) + " · " + regionLabel(r)) },
+        { k: st.year + " 年 全国排名", v: rk ? "第 " + rk + " 位" : "—", u: "", s: psz ? ("在 " + psz + " 个" + (poolKey(r) === 'city' ? "城市" : "省级单位") + "中") : "全国数据不参与排名" },
         { k: "较上年增量", v: (st.inc === null || st.inc === undefined) ? "—" : (st.inc >= 0 ? "+" : "") + fmt(st.inc, 1), u: "亿元", s: "名义口径" },
         { k: "名义增长率", v: fmtRate(st.rate), u: "", s: st.year + " 年同比" },
         { k: "数据区间", v: st.firstYear + "–" + st.year, u: "", s: "共 " + st.count + " 年有数据" }
@@ -455,7 +489,9 @@ const DATA = __DATA__;
 
     EL.sTable.innerHTML = rows.map(row => {
       const g = row[1], inc = row[2], rate = row[3];
+      const yr = rankOf(r, row[0], g);
       return "<tr><td>" + row[0] + "</td><td>" + (g === null ? "<span class='muted'>未公开</span>" : fmt(g, 1)) +
+        "</td><td>" + (yr ? yr + " / " + psz : "<span class='muted'>—</span>") +
         "</td><td>" + (inc === null ? "<span class='muted'>—</span>" : ((inc >= 0 ? "+" : "") + fmt(inc, 1))) +
         "</td><td>" + (rate === null ? "<span class='muted'>—</span>" : fmtRate(rate)) + "</td></tr>";
     }).join("");
