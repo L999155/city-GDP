@@ -1100,18 +1100,6 @@ const MAPDATA = __MAPDATA__;
         ctx.beginPath(); ctx.arc(xOf(p[0]), yOf(p[1]), 2.4, 0, Math.PI * 2); ctx.fill();
       });
 
-      // 末端强调点
-      if (st.opt.area) {
-        const last = s.points.filter(p => p[1] !== null && p[1] !== undefined).pop();
-        if (last) {
-          const lx = xOf(last[0]), ly = yOf(last[1]);
-          ctx.beginPath(); ctx.arc(lx, ly, 8, 0, Math.PI * 2);
-          ctx.fillStyle = hexA(s.color, 0.16); ctx.fill();
-          ctx.beginPath(); ctx.arc(lx, ly, 4.2, 0, Math.PI * 2);
-          ctx.fillStyle = cvar("--chart-core", "#fff"); ctx.fill();
-          ctx.lineWidth = 2.4; ctx.strokeStyle = s.color; ctx.stroke();
-        }
-      }
     });
     ctx.restore();
 
