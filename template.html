@@ -158,7 +158,7 @@
 <body>
 <header>
   <h1>经济<span>·</span>地区生产总值</h1>
-  <p>全国 335 个地级行政区 · 31 个省级地区 · 1978–2025 年 GDP 数据</p>
+  <p>全国 332 个地级行政区 · 4 个直辖市 · 31 个省级单位 · 1978–2025 年 GDP 数据</p>
 </header>
 
 <div class="wrap">
@@ -706,10 +706,10 @@ const DATA = __DATA__;
   });
 
   /* ---------- 初始化 ---------- */
-  const cityCount = REGIONS.filter(r => r.kind === 'city').length + munis.length;
+  const cityCount = REGIONS.filter(r => r.kind === 'city').length;
   const provCount = REGIONS.filter(r => r.kind === 'province').length + munis.length;
   const sub = document.querySelector('header p');
-  if (sub) sub.textContent = "全国 " + cityCount + " 个城市/地区 · " + provCount + " 个省级单位 · 1978–2025 年 GDP 数据";
+  if (sub) sub.textContent = "全国 " + cityCount + " 个地级行政区 · " + munis.length + " 个直辖市 · " + provCount + " 个省级单位 · 1978–2025 年 GDP 数据";
 
   fillProv(EL.sProv, "广东");
   fillRegion(EL.sRegion, "广东", "广东/深圳");
