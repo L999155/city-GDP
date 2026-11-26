@@ -79,7 +79,15 @@
   html.theme-dark .scroll thead th:first-child {background:var(--card-2)}
   html.theme-dark .scroll tbody tr:hover td:first-child {background:#1c2637}
   html.theme-dark .scroll.scrolled td:first-child, html.theme-dark .scroll.scrolled th:first-child {box-shadow:8px 0 8px -8px rgba(0,0,0,.6)}
-  html.theme-dark input, html.theme-dark select, html.theme-dark .search {background:var(--card-2);border-color:#2b3a52;color:var(--ink)}
+  html.theme-dark input, html.theme-dark .search {background-color:var(--card-2);border-color:#2b3a52;color:var(--ink)}
+  html.theme-dark select {
+    background-color:var(--card-2);
+    border-color:#2b3a52;
+    color:var(--ink);
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12'><path d='M2 4l4 4 4-4' fill='none' stroke='%23a9b6ca' stroke-width='1.8'/></svg>");
+    background-repeat:no-repeat;
+    background-position:right 12px center;
+  }
   html.theme-dark input:focus, html.theme-dark select:focus, html.theme-dark .search:focus {border-color:var(--accent)}
   html.theme-dark .btn {background:var(--card-2);border-color:#2b3a52;color:#cbd5e1}
   html.theme-dark .btn:hover {border-color:var(--accent);color:var(--accent)}
@@ -102,6 +110,7 @@
   html.theme-dark .detail-head {background:linear-gradient(120deg,#0a1224 0%,#111d3f 55%,#16295c 100%)}
   html.theme-dark .back {background:rgba(255,255,255,.10);border-color:rgba(255,255,255,.25);color:#fff}
   html.theme-dark #tooltip {background:var(--chart-tooltip);color:#e6ebf3;border:1px solid var(--line);box-shadow:0 6px 20px rgba(0,0,0,.5)}
+  html.theme-dark #tooltip b {color:#f8fafc;font-weight:700;letter-spacing:.3px}
   html.theme-dark .ov-rankrow:hover {background:#1c2637}
   html.theme-dark .ov-rankrow.sel {background:#1e3358}
   html.theme-dark .ov-rankrow .nm {color:#cbd5e1}
