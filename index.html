@@ -95,10 +95,11 @@
   .tier-head .desc{font-size:12px;color:#94a3b8}
   .pill{display:inline-block;padding:1px 8px;border-radius:999px;background:#eef2fa;color:#475569;font-size:11.5px}
   #tooltip{
-    position:fixed;pointer-events:none;background:#0f172a;color:#fff;font-size:12.5px;line-height:1.7;
-    padding:9px 12px;border-radius:9px;opacity:0;transition:opacity .12s;z-index:99;white-space:nowrap;
-    box-shadow:0 8px 24px rgba(15,23,42,.25);
+    position:fixed;pointer-events:none;background:rgba(255,255,255,.97);color:#0f172a;font-size:12px;line-height:1.55;
+    padding:6px 10px;border-radius:8px;opacity:0;transition:opacity .12s;z-index:99;white-space:nowrap;
+    border:1px solid #dbe6fb;box-shadow:0 4px 14px rgba(15,23,42,.10);
   }
+  #tooltip b{font-weight:600;color:#1e293b}
   .foot{color:#94a3b8;font-size:12px;padding:26px 4px 40px;line-height:1.8}
   @media (max-width:820px){
     header{padding:20px 16px 16px}
@@ -480,7 +481,32 @@ const DATA = [{"id":"中国","label":"中国","province":"全国","kind":"nation
       });
     });
 
+    // 悬停辅助线：淡色竖线 + 高亮点，便于精确读数
+    if (opt.hoverYear !== null && opt.hoverYear !== undefined) {
+      const hx = xOf(opt.hoverYear);
+      ctx.save();
+      ctx.strokeStyle = "rgba(37,99,235,.28)";
+      ctx.lineWidth = 1;
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath(); ctx.moveTo(hx, padT); ctx.lineTo(hx, padT + ih); ctx.stroke();
+      ctx.restore();
+      seriesList.forEach(s => {
+        const p = s.points.find(q => q[0] === opt.hoverYear);
+        if (!p || p[1] === null || p[1] === undefined) return;
+        ctx.beginPath(); ctx.arc(xOf(p[0]), yOf(p[1]), 4.6, 0, Math.PI * 2);
+        ctx.fillStyle = "#ffffff"; ctx.fill();
+        ctx.lineWidth = 2.2; ctx.strokeStyle = s.color; ctx.stroke();
+      });
+    }
+
     charts.set(canvas, { seriesList, xOf, yOf, y0, y1, padL, padR, padT, padB, iw, ih, W, H, opt });
+  }
+
+  function clearHover(canvas){
+    const st = charts.get(canvas);
+    const hy = st && st.opt ? st.opt.hoverYear : null;
+    if (st && hy !== null && hy !== undefined) drawChart(canvas, st.seriesList, {});
+    EL.tooltip.style.opacity = 0;
   }
 
   function showTooltip(canvas, ev){
@@ -488,12 +514,15 @@ const DATA = [{"id":"中国","label":"中国","province":"全国","kind":"nation
     if (!st) return;
     const rect = canvas.getBoundingClientRect();
     const x = ev.clientX - rect.left;
-    if (x < st.padL || x > st.padL + st.iw) { EL.tooltip.style.opacity = 0; return; }
+    if (x < st.padL || x > st.padL + st.iw) { clearHover(canvas); return; }
     const yearF = st.y0 + (x - st.padL) / st.iw * (st.y1 - st.y0);
     const year = Math.round(yearF);
+    if (st.opt.hoverYear !== year) drawChart(canvas, st.seriesList, { hoverYear: year });
+    const st2 = charts.get(canvas);
+
     let html = "<b>" + year + " 年</b>";
     let any = false;
-    st.seriesList.forEach(s => {
+    st2.seriesList.forEach(s => {
       const p = s.points.find(q => q[0] === year);
       if (p && p[1] !== null && p[1] !== undefined) {
         any = true;
@@ -505,14 +534,18 @@ const DATA = [{"id":"中国","label":"中国","province":"全国","kind":"nation
     if (!any) { EL.tooltip.style.opacity = 0; return; }
     EL.tooltip.innerHTML = html;
     EL.tooltip.style.opacity = 1;
-    const tx = Math.min(window.innerWidth - 200, ev.clientX + 14);
-    EL.tooltip.style.left = tx + "px";
-    EL.tooltip.style.top = (ev.clientY + 16) + "px";
+    const tw = EL.tooltip.offsetWidth, th = EL.tooltip.offsetHeight;
+    let left = ev.clientX - tw / 2;
+    left = Math.max(8, Math.min(window.innerWidth - tw - 8, left));
+    let top = ev.clientY - th - 18;
+    if (top < 8) top = ev.clientY + 20;
+    EL.tooltip.style.left = left + "px";
+    EL.tooltip.style.top = top + "px";
   }
 
   [EL.sChart, EL.cChart].forEach(cv => {
     cv.addEventListener('mousemove', e => showTooltip(cv, e));
-    cv.addEventListener('mouseleave', () => { EL.tooltip.style.opacity = 0; });
+    cv.addEventListener('mouseleave', () => { clearHover(cv); });
     cv.addEventListener('touchstart', e => {
       if (e.touches && e.touches[0]) showTooltip(cv, e.touches[0]);
     }, { passive: true });
@@ -520,7 +553,7 @@ const DATA = [{"id":"中国","label":"中国","province":"全国","kind":"nation
       if (e.touches && e.touches[0]) showTooltip(cv, e.touches[0]);
     }, { passive: true });
     cv.addEventListener('touchend', () => {
-      setTimeout(function () { EL.tooltip.style.opacity = 0; }, 1600);
+      setTimeout(function () { clearHover(cv); }, 1600);
     }, { passive: true });
   });
 
