@@ -744,10 +744,10 @@ const DATA = __DATA__;
   const sub = document.querySelector('header p');
   if (sub) sub.textContent = "全国 " + cityCount + " 个地级行政区 · " + munis.length + " 个直辖市 · " + provCount + " 个省级单位 · 1978–2025 年 GDP 数据";
 
-  fillProv(EL.sProv, "广东");
-  fillRegion(EL.sRegion, "广东", "广东/深圳");
-  fillProv(EL.aProv, "广东"); fillRegion(EL.aRegion, "广东", "广东/深圳");
-  fillProv(EL.bProv, "广东"); fillRegion(EL.bRegion, "广东", "广东/广州");
+  fillProv(EL.sProv, "全国");
+  fillRegion(EL.sRegion, "全国", "中国");
+  fillProv(EL.aProv, "广东"); fillRegion(EL.aRegion, "广东", "广东");
+  fillProv(EL.bProv, "江苏"); fillRegion(EL.bRegion, "江苏", "江苏");
   renderSingle();
   renderCompare();
   renderAll();

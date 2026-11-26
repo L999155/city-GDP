@@ -123,7 +123,7 @@ python -m http.server 8000
 
 ```bash
 python build.py
-# index.html 已生成：519,023 字节，364 个地区
+# index.html 已生成：520,361 字节，364 个地区
 ```
 
 `build.py` 会把 `data.json` 原样注入模板的 `__DATA__` 处，并对 `</` 做转义，避免数据截断内联脚本。
