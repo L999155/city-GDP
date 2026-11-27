@@ -267,6 +267,15 @@
   .mobile-hint{display:none}
   /* 概览 */
   .ov-layout{display:grid;grid-template-columns:minmax(0,1fr) 356px;gap:16px;align-items:start}
+  .ov-main{display:flex;flex-direction:column;gap:16px;min-width:0}
+  .ov-primacy{padding:14px 16px 12px}
+  .ov-primacy .card-head{padding:0 0 6px}
+  .ov-primacy-top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:2px 0 6px}
+  .ov-primacy-top b{font-size:26px;letter-spacing:-.4px;font-weight:700;color:var(--text-1)}
+  .ov-primacy-top span{font-size:12.5px;color:var(--muted)}
+  .ov-primacy-chart{height:auto;margin-top:2px;padding:0}
+  .ov-primacy-chart canvas{height:150px}
+  .ov-primacy-note{font-size:12px;color:var(--muted);line-height:1.6;margin-top:6px}
   .ov-mapcard{padding:14px 16px 12px}
   .ov-mapcard .card-head{padding:0 0 8px}
   .ov-mapbox{position:relative}
@@ -524,6 +533,7 @@
   <!-- 概览 -->
   <section class="panel active" id="panel-overview">
     <div class="ov-layout">
+      <div class="ov-main">
       <div class="card ov-mapcard">
         <div class="card-head">
           <h2 id="ov-map-title">中国省级行政区 GDP 分布</h2>
@@ -543,6 +553,20 @@
           <svg id="ov-inset" viewBox="__VB_INSET__" aria-hidden="true"></svg>
         </div>
         <div class="ov-legend" id="ov-legend"></div>
+      </div>
+
+      <div class="card ov-primacy">
+        <div class="card-head">
+          <h2>省会首位度</h2>
+          <span class="hint" id="ov-primacy-scope">省会 GDP ÷ 全省 GDP</span>
+        </div>
+        <div class="ov-primacy-top">
+          <b id="ov-primacy-val">—</b>
+          <span id="ov-primacy-who">—</span>
+        </div>
+        <div class="chart-box ov-primacy-chart"><canvas id="ov-primacy-chart"></canvas></div>
+        <div class="ov-primacy-note" id="ov-primacy-note">省市口径下，比重越高说明省会集聚度越强。</div>
+      </div>
       </div>
       <div class="ov-side">
         <div class="card" id="ov-panel"></div>
@@ -844,7 +868,7 @@ const MAPDATA = __MAPDATA__;
     cY1: document.getElementById('c-y1'), cY2: document.getElementById('c-y2'),
     cV1: document.getElementById('c-v1'), cV2: document.getElementById('c-v2'),
     cAuto: document.getElementById('c-auto'), cStats: document.getElementById('c-stats'),
-    cMatch: document.getElementById('c-match'),
+    cMatch: document.getElementById('c-match'), pChart: document.getElementById('ov-primacy-chart'),
     cNote: document.getElementById('c-note'), cMsg: document.getElementById('c-msg'),
     mList: document.getElementById('multi-list'), mChart: document.getElementById('m-chart'),
     mLegend: document.getElementById('m-legend'), mHead: document.getElementById('m-head'),
@@ -1036,7 +1060,8 @@ const MAPDATA = __MAPDATA__;
     const n = parseInt(full, 16);
     return "rgba(" + ((n >> 16) & 255) + "," + ((n >> 8) & 255) + "," + (n & 255) + "," + a + ")";
   }
-  function fmtAxis(v){
+  function fmtAxis(v, digits){
+    if (digits !== undefined && digits !== null) return v.toFixed(digits);
     if (v >= 10000) {
       const w = v / 10000;
       return (Math.abs(w - Math.round(w)) < 1e-6 ? String(Math.round(w)) : w.toFixed(1)) + "万";
@@ -1047,7 +1072,11 @@ const MAPDATA = __MAPDATA__;
     opt = opt || {};
     // 悬停重绘时沿用原来的样式设置（如面积渐变），避免移开鼠标后样式丢失
     const prevSt = charts.get(canvas);
-    if (prevSt && prevSt.opt && opt.area === undefined) opt.area = prevSt.opt.area;
+    if (prevSt && prevSt.opt) {
+      ["area", "unit", "digits", "axisDigits", "yMin", "tipData"].forEach(k => {
+        if (opt[k] === undefined && prevSt.opt[k] !== undefined) opt[k] = prevSt.opt[k];
+      });
+    }
     const dpr = window.devicePixelRatio || 1;
     const rect = canvas.getBoundingClientRect();
     const W = Math.max(320, rect.width), H = Math.max(200, rect.height);
@@ -1074,9 +1103,10 @@ const MAPDATA = __MAPDATA__;
     if (!st.empty) {
       st.y0 = Math.min.apply(null, years);
       st.y1 = Math.max.apply(null, years);
-      st.sc = niceScale(maxV);
+      st.yMin = (opt.yMin !== undefined && opt.yMin !== null) ? opt.yMin : 0;
+      st.sc = niceScale(maxV - st.yMin);
       st.xOf = y => padL + (st.y1 === st.y0 ? iw / 2 : (y - st.y0) / (st.y1 - st.y0) * iw);
-      st.yOf = v => padT + ih - (v / st.sc.top) * ih;
+      st.yOf = v => padT + ih - ((v - st.yMin) / st.sc.top) * ih;
     }
 
     const prev = charts.get(canvas);
@@ -1117,12 +1147,14 @@ const MAPDATA = __MAPDATA__;
 
     ctx.font = (compact ? "10.5px" : "11.5px") + " system-ui";
     ctx.textAlign = "right"; ctx.textBaseline = "middle";
-    for (let v = 0; v <= yTop + 1e-6; v += yStep) {
+    const yBase = st.yMin || 0;
+    for (let k = 0; k <= yTop + 1e-6; k += yStep) {
+      const v = yBase + k;
       const y = yOf(v);
-      ctx.strokeStyle = v === 0 ? cvar("--chart-zero", "#cbd5e1") : cvar("--chart-grid", "#eef1f7");
+      ctx.strokeStyle = (k === 0 && yBase === 0) ? cvar("--chart-zero", "#cbd5e1") : cvar("--chart-grid", "#eef1f7");
       ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(W - padR, y); ctx.stroke();
       ctx.fillStyle = cvar("--chart-axis", "#94a3b8");
-      ctx.fillText(fmtAxis(v), padL - 10, y);
+      ctx.fillText(fmtAxis(v, st.opt.axisDigits), padL - 10, y);
     }
 
     ctx.textAlign = "center"; ctx.textBaseline = "top"; ctx.fillStyle = cvar("--chart-axis", "#94a3b8");
@@ -1237,11 +1269,17 @@ const MAPDATA = __MAPDATA__;
     entries.forEach(e => {
       if (e.v !== null) {
         any = true;
-        html += "<br><span style='color:" + e.color + "'>●</span> " + e.name + "：" + fmt(e.v, 1) + " 亿元";
+        const tipUnit = (st2.opt && st2.opt.unit !== undefined) ? st2.opt.unit : " 亿元";
+        const tipDigits = (st2.opt && st2.opt.digits !== undefined) ? st2.opt.digits : 1;
+        html += "<br><span style='color:" + e.color + "'>●</span> " + e.name + "：" + fmt(e.v, tipDigits) + tipUnit;
       } else {
         html += "<br><span style='color:#64748b'>●</span> " + e.name + "：未公开";
       }
     });
+    if (any && st2.opt && st2.opt.tipData) {
+      const extra = st2.opt.tipData[year];
+      if (extra) html += "<br><span style='color:#64748b'>" + extra + "</span>";
+    }
     if (!any) { EL.tooltip.style.opacity = 0; return; }
     EL.tooltip.innerHTML = html;
     EL.tooltip.style.opacity = 1;
@@ -1254,7 +1292,7 @@ const MAPDATA = __MAPDATA__;
     EL.tooltip.style.top = top + "px";
   }
 
-  [EL.sChart, EL.cChart, EL.mChart].forEach(cv => {
+  [EL.sChart, EL.cChart, EL.mChart, EL.pChart].filter(Boolean).forEach(cv => {
     cv.addEventListener('mousemove', e => showTooltip(cv, e));
     cv.addEventListener('mouseleave', () => { clearHover(cv); });
     cv.addEventListener('touchstart', e => {
@@ -1947,23 +1985,108 @@ const MAPDATA = __MAPDATA__;
     }
   }
 
+  // 省会首位度：省会 GDP ÷ 全省 GDP
+  const PROV_CAPITAL = {
+    河北: "石家庄", 山西: "太原", 内蒙古: "呼和浩特", 辽宁: "沈阳", 吉林: "长春",
+    黑龙江: "哈尔滨", 江苏: "南京", 浙江: "杭州", 安徽: "合肥", 福建: "福州",
+    江西: "南昌", 山东: "济南", 河南: "郑州", 湖北: "武汉", 湖南: "长沙",
+    广东: "广州", 广西: "南宁", 海南: "海口", 四川: "成都", 贵州: "贵阳",
+    云南: "昆明", 西藏: "拉萨", 陕西: "西安", 甘肃: "兰州", 青海: "西宁",
+    宁夏: "银川", 新疆: "乌鲁木齐"
+  };
+  const PRIMACY_CACHE = new Map();
+
+  function findProvRow(prov) {
+    return REGIONS.find(r => r.id === prov && (r.kind === "province" || r.kind === "national"));
+  }
+
+  function primacyRows(prov) {
+    if (PRIMACY_CACHE.has(prov)) return PRIMACY_CACHE.get(prov);
+    const cap = PROV_CAPITAL[prov];
+    let out = [];
+    if (cap) {
+      const capRow = REGIONS.find(r => r.id === prov + "/" + cap);
+      const provRow = findProvRow(prov);
+      if (capRow && provRow) {
+        const capSeries = regSeries(capRow);
+        const provSeries = regSeries(provRow);
+        Array.from(capSeries.keys()).sort((a, b) => a - b).forEach(y => {
+          const c = capSeries.get(y), p = provSeries.get(y);
+          if (!c || !p) return;
+          if (c.gdp === null || c.gdp === undefined) return;
+          if (p.gdp === null || p.gdp === undefined || !(p.gdp > 0)) return;
+          out.push({ year: y, share: c.gdp / p.gdp, capV: c.gdp, provV: p.gdp });
+        });
+      }
+    }
+    PRIMACY_CACHE.set(prov, out);
+    return out;
+  }
+
+  function bootPrimacy() {
+    if (typeof requestAnimationFrame === "function") requestAnimationFrame(() => drawPrimacy());
+    else drawPrimacy();
+  }
+
+  function drawPrimacy(provId) {
+    const cv = document.getElementById("ov-primacy-chart");
+    if (!cv || !cv.getBoundingClientRect().width) return;
+    const id = provId || ovSelected;
+    const valEl = document.getElementById("ov-primacy-val");
+    const whoEl = document.getElementById("ov-primacy-who");
+    const noteEl = document.getElementById("ov-primacy-note");
+    const scopeEl = document.getElementById("ov-primacy-scope");
+    const resetScope = () => { if (scopeEl) scopeEl.textContent = "省会 GDP ÷ 全省 GDP"; };
+
+    if (!id || id === "中国" || id.indexOf("__") === 0) {
+      if (valEl) valEl.textContent = "—";
+      if (whoEl) whoEl.textContent = id === "中国" ? "全国不适用（需选定省份）" : "该地区不适用";
+      if (noteEl) noteEl.textContent = "选择某个省份可查看该省省会首位度。";
+      resetScope();
+      drawChart(cv, [], { digits: 1, unit: "%" });
+      return;
+    }
+    if (!PROV_CAPITAL[id]) {
+      if (valEl) valEl.textContent = "—";
+      if (whoEl) whoEl.textContent = "直辖市不适用省会首位度";
+      if (noteEl) noteEl.textContent = "直辖市“全市”即全省口径，比值恒为 100%，没有比较意义。";
+      resetScope();
+      drawChart(cv, [], { digits: 1, unit: "%" });
+      return;
+    }
+
+    const rows = primacyRows(id);
+    const last = rows[rows.length - 1];
+    if (scopeEl) scopeEl.textContent = id + " · " + PROV_CAPITAL[id] + " ÷ " + id;
+    if (!last) {
+      if (valEl) valEl.textContent = "—";
+      if (whoEl) whoEl.textContent = "暂无可用数据";
+      drawChart(cv, [], { digits: 1, unit: "%" });
+      return;
+    }
+    if (valEl) valEl.textContent = (last.share * 100).toFixed(1) + "%";
+    if (whoEl) whoEl.textContent = last.year + " 年 · " + PROV_CAPITAL[id] + " " +
+      fmt(last.capV, 1) + " ÷ 全省 " + fmt(last.provV, 1);
+    if (noteEl) noteEl.textContent = last.share >= 0.5
+      ? "省会占全省一半以上，属于高度集中的省份。"
+      : (last.share >= 0.3 ? "省会占比中等偏高，集聚度明显。" : "省会占比偏低，省内多中心特征较强。");
+
+    const maxV = Math.max.apply(null, rows.map(r => r.share * 100));
+    const tipData = {};
+    rows.forEach(r => {
+      tipData[r.year] = PROV_CAPITAL[id] + " " + fmt(r.capV, 1) + " ÷ 全省 " + fmt(r.provV, 1);
+    });
+    drawChart(cv, [{
+      name: "省会占比", color: "#0f766e",
+      points: rows.map(r => [r.year, r.share * 100])
+    }], { digits: 1, axisDigits: maxV < 20 ? 1 : 0, unit: "%", tipData: tipData });
+  }
+
   function refreshOvTheme() {
-    document.querySelectorAll("#ov-map path.prov").forEach(p => {
-      const id = p.dataset.id;
-      const d = id ? ovStats.provs.find(x => x.id === id) : null;
-      p.setAttribute("fill", d ? ovColor(d.gdp) : (isDark() ? "#1b2434" : "#f1f4f9"));
-    });
-    document.querySelectorAll("#ov-inset path").forEach(p => {
-      if ((p.getAttribute("stroke") || "") === "none") return;
-      const d = p.getAttribute("d");
-      const sh = MAPDATA.shapes.find(x => x.d === d);
-      const id = sh ? GEO2ID[sh.n] : null;
-      const rec = id ? ovStats.provs.find(x => x.id === id) : null;
-      if (sh) p.setAttribute("fill", rec ? ovColor(rec.gdp) : (isDark() ? "#1b2434" : "#f1f4f9"));
-    });
+    if (ovStats) paintOvFills();
+    drawPrimacy();
     renderOvRank();
-    const sel = ovSelected;
-    if (sel) ovSelect(sel);
+    if (ovSelected) ovSelect(ovSelected);
   }
 
   [themeBtn, themeBtnDetail].forEach(b => { if (b) b.addEventListener("click", toggleTheme); });
@@ -2189,6 +2312,7 @@ const MAPDATA = __MAPDATA__;
     fillOvJump();
     renderOvAll();
     ovSelect(ovStats.provs[0].id);
+    bootPrimacy();
   }
 
   function fillOvJump() {
@@ -2366,6 +2490,7 @@ const MAPDATA = __MAPDATA__;
       const has = Array.prototype.some.call(jump.options, o => o.value === id);
       if (has) jump.value = id;
     }
+    drawPrimacy(id);
     const d = ovStats.provs.find(p => p.id === id);
     if (d) ovRenderPanel(d);
     else ovShowNone(OV_NONE_LABEL[id] || id);
@@ -2491,6 +2616,7 @@ const MAPDATA = __MAPDATA__;
   EL.bRegion.addEventListener('change', () => renderCompare(true));
 
   window.addEventListener('resize', () => {
+    if (document.getElementById('panel-overview').classList.contains('active')) drawPrimacy();
     if (document.getElementById('panel-single').classList.contains('active')) renderSingle();
     if (document.getElementById('panel-compare').classList.contains('active')) renderCompare();
     if (document.getElementById('panel-multi').classList.contains('active')) renderMulti();
