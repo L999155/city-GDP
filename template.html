@@ -1297,7 +1297,7 @@ const MAPDATA = __MAPDATA__;
         "</td><td>" + (rinfo ? rinfo.rank + " / " + rinfo.total : "<span class='muted'>—</span>") +
         "</td><td>" + (inc === null ? "<span class='muted'>—</span>" : ((inc >= 0 ? "+" : "") + fmt(inc, 1))) +
         "</td><td>" + (rate === null ? "<span class='muted'>—</span>" : fmtRate(rate)) +
-        (hasReal ? ("</td><td>" + (g === null ? "<span class='muted'>未公开</span>" : ((rg === null || rg === undefined || isNaN(rg)) ? "<span class='muted'>—</span>" : fmtRate(rg)))) : "") +
+        (hasReal ? ("</td><td>" + ((g === null || rg === null || rg === undefined || isNaN(rg)) ? "<span class='muted'>—</span>" : fmtRate(rg))) : "") +
         "</td></tr>";
     }).join("");
 
@@ -1389,7 +1389,7 @@ const MAPDATA = __MAPDATA__;
         rk ? (rk + " / " + poolSize(r)) : "—",
         num(inc, 1),
         fmtRate(rate),
-        (g === null || g === undefined) ? "未公开" : fmtRate(rg)
+        (g === null || g === undefined || rg === null || rg === undefined) ? "—" : fmtRate(rg)
       ]);
     });
     const ys = r.series.filter(x => x[1] !== null && x[1] !== undefined).map(x => x[0]).sort((a, b) => a - b);
@@ -1718,7 +1718,7 @@ const MAPDATA = __MAPDATA__;
     cards.push({ k: "增量", v: (inc === null || inc === undefined) ? "—" : ((inc >= 0 ? "+" : "") + fmt(inc, 1)), u: (inc === null || inc === undefined) ? "" : "亿元", s: "较上年" });
     cards.push({ k: "名义增长率", v: (rate === null || rate === undefined) ? "—" : fmtRate(rate), u: "", s: year + " 年同比" });
     if (!isCity) {
-      cards.push({ k: "实际增长率", v: (rk === null || rk === undefined || isNaN(rk)) ? "—" : fmtRate(rk), u: "", s: "不变价口径" });
+      cards.push({ k: "实际增长率", v: (g === null || g === undefined || rk === null || rk === undefined || isNaN(rk)) ? "—" : fmtRate(rk), u: "", s: "不变价口径" });
     }
     (function () {
       const ri = rankInfoOf(r, year, g);
