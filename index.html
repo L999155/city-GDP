@@ -329,6 +329,15 @@
   .calc-box input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,.12)}
   .calc-actions{display:flex;align-items:center;gap:12px;padding:12px 20px 4px;flex-wrap:wrap}
   .calc-actions .btn{padding:8px 14px;font-size:13px}
+  .calc-auto{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted);cursor:pointer}
+  .calc-auto input{width:14px;height:14px;accent-color:var(--accent);cursor:pointer}
+  .calc-auto:hover{color:var(--text-2)}
+  .calc-match{margin:2px 0 14px;font-size:13px;line-height:1.7;color:var(--text-2)}
+  .calc-match b{color:var(--text-1)}
+  .calc-match .lt{color:#b45309}
+  .calc-match .gt{color:#0f766e}
+  html.theme-dark .calc-match .lt{color:#fbbf24}
+  html.theme-dark .calc-match .gt{color:#5eead4}
   #s-table tbody tr{cursor:pointer}
   .detail{position:fixed;top:32px;left:0;right:0;bottom:0;background:#f4f6fb;z-index:200;overflow:auto;display:none}
   .detail.open{display:block}
@@ -648,8 +657,13 @@
           <div class="field"><label>终止数据（亿元）</label><input id="c-v2" type="number" step="0.01" min="0"></div>
         </div>
       </div>
-      <div class="calc-actions"><span class="hint" id="c-msg"></span></div>
+      <div class="calc-actions">
+        <label class="calc-auto"><input type="checkbox" id="c-auto" checked>
+          <span>随年份自动填入全国数据</span></label>
+        <span class="hint" id="c-msg"></span>
+      </div>
       <div class="stats" id="c-stats"></div>
+      <div class="calc-match" id="c-match"></div>
       <div class="note" id="c-note"></div>
     </div>
   </section>
@@ -6829,7 +6843,8 @@ const MAPDATA = {"w":1000.0,"h":978.6,"main":{"x":-6.0,"y":-6.0,"w":1012.0,"h":7
     mExport: document.getElementById('m-export'), aExport: document.getElementById('a-export'),
     cY1: document.getElementById('c-y1'), cY2: document.getElementById('c-y2'),
     cV1: document.getElementById('c-v1'), cV2: document.getElementById('c-v2'),
-    cStats: document.getElementById('c-stats'),
+    cAuto: document.getElementById('c-auto'), cStats: document.getElementById('c-stats'),
+    cMatch: document.getElementById('c-match'),
     cNote: document.getElementById('c-note'), cMsg: document.getElementById('c-msg'),
     mList: document.getElementById('multi-list'), mChart: document.getElementById('m-chart'),
     mLegend: document.getElementById('m-legend'), mHead: document.getElementById('m-head'),
@@ -6874,6 +6889,28 @@ const MAPDATA = {"w":1000.0,"h":978.6,"main":{"x":-6.0,"y":-6.0,"w":1012.0,"h":7
     r.series.forEach(row => m.set(row[0], { gdp: row[1], inc: row[2], rate: row[3] }));
     return m;
   }
+  const REG_SERIES_CACHE = new Map();
+  function regSeries(r) {
+    let m = REG_SERIES_CACHE.get(r.id);
+    if (!m) { m = seriesMap(r); REG_SERIES_CACHE.set(r.id, m); }
+    return m;
+  }
+
+  // 找出与输入数据完全对得上的地区（同一年 + 同一年 GDP，误差 0.3% 内）
+  function matchCalcRegion(y1, v1, v2) {
+    const y2 = y1 + 1;
+    for (let i = 0; i < REGIONS.length; i++) {
+      const r = REGIONS[i];
+      const m = regSeries(r);
+      const a = m.get(y1), b = m.get(y2);
+      if (!a || !b || a.gdp === null || b.gdp === null) continue;
+      if (Math.abs(a.gdp / v1 - 1) < 0.003 && Math.abs(b.gdp / v2 - 1) < 0.003) {
+        return { region: r, g1: a.gdp, g2: b.gdp };
+      }
+    }
+    return null;
+  }
+
   function statOf(r){
     const rows = r.series.filter(x => x[1] !== null && x[1] !== undefined);
     if (!rows.length) return null;
@@ -7787,9 +7824,12 @@ const MAPDATA = {"w":1000.0,"h":978.6,"main":{"x":-6.0,"y":-6.0,"w":1012.0,"h":7
   function syncCalcYear() {
     const y1 = +EL.cY1.value;
     EL.cY2.value = (y1 + 1) + " 年";
-    const v1 = NAT_GDP.get(y1), v2 = NAT_GDP.get(y1 + 1);
-    if (v1) EL.cV1.value = v1.toFixed(1);
-    if (v2) EL.cV2.value = v2.toFixed(1);
+    // 关闭自动填入时，只换年份、保留用户已录入的数据
+    if (!EL.cAuto || EL.cAuto.checked) {
+      const v1 = NAT_GDP.get(y1), v2 = NAT_GDP.get(y1 + 1);
+      if (v1) EL.cV1.value = v1.toFixed(1);
+      if (v2) EL.cV2.value = v2.toFixed(1);
+    }
     calcRender();
   }
 
@@ -7811,7 +7851,8 @@ const MAPDATA = {"w":1000.0,"h":978.6,"main":{"x":-6.0,"y":-6.0,"w":1012.0,"h":7
     const cards = [
       { k: y2 + " 年 名义增速", v: fmtRate(nomRate), u: "", s: "较 " + y1 + " 年" },
       { k: y2 + " 年 实际增速", v: (realRate === null) ? "—" : fmtRate(realRate), u: "",
-        s: (d1 && d2) ? ("平减指数 " + d1.toFixed(1) + " → " + d2.toFixed(1)) : "不变价口径" },
+        s: (d1 && d2) ? ("平减指数 " + d1.toFixed(1) + " → " + d2.toFixed(1) +
+              "（" + (d2 / d1 - 1 >= 0 ? "+" : "") + ((d2 / d1 - 1) * 100).toFixed(1) + "%）") : "不变价口径" },
       { k: y2 + " 年 名义增量", v: (nomInc >= 0 ? "+" : "") + fmt(nomInc, 1), u: "亿元", s: fmt(v2, 1) + " − " + fmt(v1, 1) },
       { k: y2 + " 年 国内生产总值指数", v: (i2 === null || i2 === undefined) ? "—" : i2.toFixed(1), u: "", s: "1978 年 = 100" }
     ];
@@ -7821,6 +7862,41 @@ const MAPDATA = {"w":1000.0,"h":978.6,"main":{"x":-6.0,"y":-6.0,"w":1012.0,"h":7
       d.innerHTML = "<div class='k'>" + c.k + "</div><div class='v'>" + c.v + (c.u ? "<small>" + c.u + "</small>" : "") + "</div><div class='s'>" + c.s + "</div>";
       EL.cStats.appendChild(d);
     });
+
+    // 若输入正好是某个地区的官方数据，反推该地区平减指数并与全国比较
+    if (EL.cMatch) {
+      EL.cMatch.innerHTML = "";
+      let hit = (v1 > 0 && v2 > 0) ? matchCalcRegion(y1, v1, v2) : null;
+      if (hit && hit.region.id === "中国") {
+        hit = null;                      // 全国数据本身无需对比
+      }
+      if (hit) {
+        const r = hit.region;
+        const nom = hit.g2 / hit.g1 - 1;
+        const real = realGrowthOf(r, y2);
+        const name = regionLabel(r) + " " + y2;
+        if (real === null || real === undefined || isNaN(real)) {
+          EL.cMatch.innerHTML = "<b>" + name + "</b>：该地未公布不变价指数，无法反推本地平减指数。";
+        } else {
+          const localDefl = (1 + nom) / (1 + real) - 1;
+          const natDeflPct = (d1 && d2) ? (d2 / d1 - 1) : null;
+          if (natDeflPct === null) {
+            EL.cMatch.innerHTML = "<b>" + name + "</b>：隐含平减指数 " + fmtRate(localDefl) + "。";
+          } else {
+            const diff = localDefl - natDeflPct;
+            const cls = diff < 0 ? "lt" : "gt";
+            const tail = Math.abs(diff) < 0.005
+              ? "，与全国基本持平"
+              : (diff < 0 ? "，当地物价涨幅低于全国" : "，当地物价涨幅高于全国");
+            EL.cMatch.innerHTML = "<b>" + name + "</b>：公布实际增速 " + fmtRate(real) +
+              "，隐含平减指数 " + fmtRate(localDefl) +
+              "，全国 " + fmtRate(natDeflPct) +
+              "，<span class='" + cls + "'>" + (diff >= 0 ? "+" : "") + (diff * 100).toFixed(1) + " 个百分点</span>" +
+              tail + "。";
+          }
+        }
+      }
+    }
 
     EL.cNote.innerHTML =
       "<span class='ln'><b>名义增速</b><span class='fml'>＝ 终止数据 ÷ 起始数据 − 1</span></span>" +
@@ -8410,6 +8486,7 @@ const MAPDATA = {"w":1000.0,"h":978.6,"main":{"x":-6.0,"y":-6.0,"w":1012.0,"h":7
   EL.bProv.addEventListener('change', () => { fillRegion(EL.bRegion, EL.bProv.value); renderCompare(true); });
   EL.aRegion.addEventListener('change', () => renderCompare(true));
   EL.cY1.addEventListener('change', syncCalcYear);
+  if (EL.cAuto) EL.cAuto.addEventListener('change', () => { if (EL.cAuto.checked) syncCalcYear(); });
   [EL.cV1, EL.cV2].forEach(el => el.addEventListener('input', calcRender));
   EL.bRegion.addEventListener('change', () => renderCompare(true));
 
