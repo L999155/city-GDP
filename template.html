@@ -14,6 +14,7 @@
     --accent-soft:#dbeafe; --radius:14px;
     --card-2:#f8fafc; --line-2:#eef1f7; --line-3:#eef2f8;
     --text-2:#334155; --text-3:#475569; --text-4:#5b6b85;
+    --map-muted:#dfe6f2; --map-active:#b9c6dc;
     --chart-grid:#eef1f7; --chart-zero:#cbd5e1; --chart-axis:#94a3b8;
     --chart-core:#ffffff; --chart-tooltip:#ffffff;
   }
@@ -38,7 +39,7 @@
   }
   .marquee-track{
     display:inline-flex; align-items:center; height:32px; white-space:nowrap;
-    animation:marqueeMove 46s linear infinite; will-change:transform;
+    animation:marqueeMove 96s linear infinite; will-change:transform;
   }
   .marquee-track span{font-size:13px;font-weight:600;color:#c81e1e;letter-spacing:.3px;margin-right:84px}
   .marquee:hover .marquee-track{animation-play-state:paused}
@@ -56,6 +57,7 @@
       --line:#243044; --accent:#60a5fa; --accent-soft:#1e3358;
       --card-2:#1b2434; --line-2:#243044; --line-3:#22304a;
       --text-2:#cbd5e1; --text-3:#b6c2d4; --text-4:#93a1b8;
+      --map-muted:#2a3547; --map-active:#4b5c79;
       --chart-grid:#243044; --chart-zero:#3a4a66; --chart-axis:#8194b0;
       --chart-core:#161e2c; --chart-tooltip:#1b2434;
     }
@@ -116,7 +118,7 @@
   html.theme-dark .ov-rankrow .nm {color:#cbd5e1}
   html.theme-dark .ov-rankrow.sel .nm {color:#93c5fd}
   html.theme-dark .ov-rankrow .rk, html.theme-dark .ov-rankrow .val {color:#93a1b8}
-  html.theme-dark .ov-rankrow .bar {background:#22304a}
+  html.theme-dark .ov-rankrow .bar {background:#26344d}
   html.theme-dark .ov-row {border-bottom-color:#22304a}
   html.theme-dark .ov-bar {background:#22304a}
   html.theme-dark #ov-inset {background:#111a28;border-color:#243044}
@@ -274,6 +276,11 @@
   #ov-map path.prov{stroke:#fff;stroke-width:.8;cursor:pointer;transition:fill .15s}
   #ov-map path.prov:hover{stroke:#1e293b;stroke-width:1.4}
   #ov-map path.prov.sel{stroke:#0f172a;stroke-width:1.8}
+  #ov-map g.prov-g{transform-box:fill-box;transform-origin:center}
+  #ov-map.focus g.prov-g.sel{transform:scale(1.15);transition:transform .32s cubic-bezier(.22,.61,.36,1)}
+  #ov-map.focus g.prov-g.sel path.prov{stroke:#0f172a;stroke-width:1.6}
+  #ov-map g.prov-g.nodata.sel path.prov{fill:var(--map-active) !important}
+  #ov-inset.focus path.muted{opacity:.35}
   .ov-legend{display:flex;align-items:center;gap:6px;margin-top:8px;font-size:11.5px;color:var(--muted);flex-wrap:wrap}
   .ov-legend i{width:24px;height:10px;border-radius:2px;display:inline-block}
   .ov-side{display:flex;flex-direction:column;gap:14px}
@@ -335,6 +342,7 @@
     padding:7px 13px;font-size:13px;color:#fff;cursor:pointer}
   .back:hover{background:rgba(255,255,255,.18)}
   .detail-inner h2{margin:0 0 16px;font-size:22px;letter-spacing:.3px}
+  #detail-stats{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
   .donut-wrap{display:flex;align-items:center;gap:26px;padding:10px 20px 24px}
   .donut-chart-wrap{position:relative;width:210px;height:210px;flex:0 0 auto}
   #detail-chart{width:210px;height:210px;display:block}
@@ -448,18 +456,18 @@
 
 <div class="marquee" role="status" aria-label="站点公告">
   <div class="marquee-track">
-    <span>欢迎使用本网页，部分数据未更新，敬请期待！</span>
-    <span>Welcome to this site. Some data are not yet updated — stay tuned!</span>
-    <span>欢迎使用本网页，部分数据未更新，敬请期待！</span>
-    <span>Welcome to this site. Some data are not yet updated — stay tuned!</span>
-    <span>欢迎使用本网页，部分数据未更新，敬请期待！</span>
-    <span>Welcome to this site. Some data are not yet updated — stay tuned!</span>
-    <span>欢迎使用本网页，部分数据未更新，敬请期待！</span>
-    <span>Welcome to this site. Some data are not yet updated — stay tuned!</span>
-    <span>欢迎使用本网页，部分数据未更新，敬请期待！</span>
-    <span>Welcome to this site. Some data are not yet updated — stay tuned!</span>
-    <span>欢迎使用本网页，部分数据未更新，敬请期待！</span>
-    <span>Welcome to this site. Some data are not yet updated — stay tuned!</span>
+    <span>1. 欢迎使用本网页。　　2. 除最新年份 GDP 为初步核算外，其余年份均为最终核算。　　3. 部分数据尚未更新，敬请期待。</span>
+    <span>1. Welcome to this site.   2. Except for the latest year, all GDP figures are final estimates.   3. Some data are not yet updated — stay tuned.</span>
+    <span>1. 欢迎使用本网页。　　2. 除最新年份 GDP 为初步核算外，其余年份均为最终核算。　　3. 部分数据尚未更新，敬请期待。</span>
+    <span>1. Welcome to this site.   2. Except for the latest year, all GDP figures are final estimates.   3. Some data are not yet updated — stay tuned.</span>
+    <span>1. 欢迎使用本网页。　　2. 除最新年份 GDP 为初步核算外，其余年份均为最终核算。　　3. 部分数据尚未更新，敬请期待。</span>
+    <span>1. Welcome to this site.   2. Except for the latest year, all GDP figures are final estimates.   3. Some data are not yet updated — stay tuned.</span>
+    <span>1. 欢迎使用本网页。　　2. 除最新年份 GDP 为初步核算外，其余年份均为最终核算。　　3. 部分数据尚未更新，敬请期待。</span>
+    <span>1. Welcome to this site.   2. Except for the latest year, all GDP figures are final estimates.   3. Some data are not yet updated — stay tuned.</span>
+    <span>1. 欢迎使用本网页。　　2. 除最新年份 GDP 为初步核算外，其余年份均为最终核算。　　3. 部分数据尚未更新，敬请期待。</span>
+    <span>1. Welcome to this site.   2. Except for the latest year, all GDP figures are final estimates.   3. Some data are not yet updated — stay tuned.</span>
+    <span>1. 欢迎使用本网页。　　2. 除最新年份 GDP 为初步核算外，其余年份均为最终核算。　　3. 部分数据尚未更新，敬请期待。</span>
+    <span>1. Welcome to this site.   2. Except for the latest year, all GDP figures are final estimates.   3. Some data are not yet updated — stay tuned.</span>
   </div>
 </div>
 <header>
@@ -670,6 +678,7 @@
   <div class="foot">
     <div>数据来源：国家统计局及各地区统计局，可能会有四舍五入的情况；空值统一标注「未公开」。</div>
     <div>说明：GDP 单位为亿元，名义增长率为当年相对上年的名义增速；两地区对比中的“A 占 B”为同年 A 的 GDP 除以 B 的 GDP。</div>
+    <div>世界排名：中国的历年 GDP 世界排名按世界银行现价美元数据计算，各国发布进度不同，排名分母会随年份变化。</div>
     <div>覆盖范围：不含港澳台地区及新疆生产建设兵团。</div>
   </div>
 </div>
@@ -883,12 +892,13 @@ const MAPDATA = __MAPDATA__;
   function regionLabel(r){ return r.kind === 'national' ? r.label : displayName(r); }
 
   /* ---------- 全国排名（同层级、同年度） ---------- */
-  const CITY_POOL = REGIONS.filter(r => r.kind === 'city' || (r.kind === 'national' && r.id !== '中国'));
+  // 直辖市按「省级单位」参与排名，不混进地级行政区池
+  const CITY_POOL = REGIONS.filter(r => r.kind === 'city');
   const PROV_POOL = REGIONS.filter(r => r.kind === 'province' || (r.kind === 'national' && r.id !== '中国'));
   function poolKey(r){
     if (r.kind === 'province') return 'prov';
     if (r.kind === 'city') return 'city';
-    if (r.kind === 'national' && r.id !== '中国') return 'city';
+    if (r.kind === 'national' && r.id !== '中国') return 'prov';
     return null;
   }
   const RANK_POOL = { city: CITY_POOL, prov: PROV_POOL };
@@ -903,6 +913,29 @@ const MAPDATA = __MAPDATA__;
     RANK_BY_YEAR[k].forEach(arr => arr.sort((a, b) => b - a));
   });
   function poolSize(r){ const k = poolKey(r); return k ? RANK_POOL[k].length : 0; }
+  function worldRankOf(year) {
+    const v = WORLD_RANK[year];
+    return v ? { rank: v[0], total: v[1] } : null;
+  }
+
+  // 统一排名：中国用世界排名，其余用国内同级排名
+  function rankInfoOf(r, year, gdp) {
+    if (r.id === "中国") {
+      const w = worldRankOf(year);
+      return w ? { rank: w.rank, total: w.total, scope: "world" } : null;
+    }
+    const rk = rankOf(r, year, gdp);
+    if (!rk) return null;
+    return { rank: rk, total: poolSize(r), scope: poolKey(r) };
+  }
+
+  function scopeLabel(info) {
+    if (!info) return "";
+    if (info.scope === "world") return "全球 " + info.total + " 个经济体";
+    if (info.scope === "city") return "共 " + info.total + " 个地级行政区";
+    return "共 " + info.total + " 个省级单位";
+  }
+
   function rankOf(r, year, gdp){
     const k = poolKey(r);
     if (!k || gdp === null || gdp === undefined) return null;
@@ -1150,15 +1183,26 @@ const MAPDATA = __MAPDATA__;
     if (st.opt.hoverYear !== year) drawChart(canvas, st.seriesList, { hoverYear: year });
     const st2 = charts.get(canvas);
 
+    // 气泡内按当年 GDP 从高到低排列，未公开的排最后
+    const entries = st2.seriesList.map(s => {
+      const p = s.points.find(q => q[0] === year);
+      const v = (p && p[1] !== null && p[1] !== undefined) ? p[1] : null;
+      return { name: s.name, color: s.color, v: v };
+    });
+    entries.sort((a, b) => {
+      if (a.v === null && b.v === null) return 0;
+      if (a.v === null) return 1;
+      if (b.v === null) return -1;
+      return b.v - a.v;
+    });
     let html = "<b>" + year + " 年</b>";
     let any = false;
-    st2.seriesList.forEach(s => {
-      const p = s.points.find(q => q[0] === year);
-      if (p && p[1] !== null && p[1] !== undefined) {
+    entries.forEach(e => {
+      if (e.v !== null) {
         any = true;
-        html += "<br><span style='color:" + s.color + "'>●</span> " + s.name + "：" + fmt(p[1], 1) + " 亿元";
+        html += "<br><span style='color:" + e.color + "'>●</span> " + e.name + "：" + fmt(e.v, 1) + " 亿元";
       } else {
-        html += "<br><span style='color:#64748b'>●</span> " + s.name + "：未公开";
+        html += "<br><span style='color:#64748b'>●</span> " + e.name + "：未公开";
       }
     });
     if (!any) { EL.tooltip.style.opacity = 0; return; }
@@ -1205,7 +1249,16 @@ const MAPDATA = __MAPDATA__;
     if (st) {
       cards = [
         { k: st.year + " 年 GDP", v: fmt(st.gdp, 1), u: "亿元", s: (provLabelOf(r) === regionLabel(r) ? regionLabel(r) : provLabelOf(r) + " · " + regionLabel(r)) },
-        { k: st.year + " 年 全国排名", v: rk ? "第 " + rk + " 位" : "—", u: "", s: psz ? ("在 " + psz + " 个" + (poolKey(r) === 'city' ? "城市" : "省级单位") + "中") : "全国数据不参与排名" },
+        (function () {
+          const ri = rankInfoOf(r, st.year, st.gdp);
+          return {
+            k: st.year + " 年 " + (isNat ? "世界排名" : "全国排名"),
+            v: ri ? "第 " + ri.rank + " 位" : "—", u: "",
+            s: ri ? (ri.scope === "world" ? "全球 " + ri.total + " 个经济体"
+                    : "在 " + ri.total + " 个" + (ri.scope === "city" ? "地级行政区" : "省级单位") + "中")
+                  : "暂无排名数据"
+          };
+        })(),
         { k: "较上年增量", v: (st.inc === null || st.inc === undefined) ? "—" : (st.inc >= 0 ? "+" : "") + fmt(st.inc, 1), u: "亿元", s: "名义口径" },
         { k: "名义增长率", v: fmtRate(st.rate), u: "", s: st.year + " 年同比" },
         { k: st.year + " 年 实际增长率", v: (rgLatest === null || rgLatest === undefined || isNaN(rgLatest)) ? "—" : fmtRate(rgLatest), u: "",
@@ -1223,7 +1276,8 @@ const MAPDATA = __MAPDATA__;
     });
 
     const hasReal = true;
-    document.getElementById("s-head").innerHTML = "<th>年份</th><th>GDP(亿元)</th><th>全国排名</th><th>增量(亿元)</th><th>名义增长率</th><th>实际增速</th>";
+    document.getElementById("s-head").innerHTML = "<th>年份</th><th>GDP(亿元)</th><th>" +
+      (isNat ? "世界排名" : "全国排名") + "</th><th>增量(亿元)</th><th>名义增长率</th><th>实际增速</th>";
     const noteEl = document.getElementById("s-note");
     noteEl.style.display = "";
     const tail = "<span class='ln warn'>指数口径与统计公报初步核算数可能相差 0.1—0.3 个百分点。</span>";
@@ -1235,12 +1289,12 @@ const MAPDATA = __MAPDATA__;
     const byYearS = new Map(r.series.map(x => [x[0], x]));
     EL.sTable.innerHTML = rows.map(row => {
       const g = row[1], inc = row[2], rate = row[3];
-      const yr = rankOf(r, row[0], g);
+      const rinfo = rankInfoOf(r, row[0], g);
       const prevRow = byYearS.get(row[0] - 1);
       const prevGdp = prevRow ? prevRow[1] : null;
       const rg = realGrowthOf(r, row[0]);
       return "<tr data-year='" + row[0] + "'><td>" + row[0] + "</td><td>" + (g === null ? "<span class='muted'>未公开</span>" : fmt(g, 1)) +
-        "</td><td>" + (yr ? yr + " / " + psz : "<span class='muted'>—</span>") +
+        "</td><td>" + (rinfo ? rinfo.rank + " / " + rinfo.total : "<span class='muted'>—</span>") +
         "</td><td>" + (inc === null ? "<span class='muted'>—</span>" : ((inc >= 0 ? "+" : "") + fmt(inc, 1))) +
         "</td><td>" + (rate === null ? "<span class='muted'>—</span>" : fmtRate(rate)) +
         (hasReal ? ("</td><td>" + (g === null ? "<span class='muted'>未公开</span>" : ((rg === null || rg === undefined || isNaN(rg)) ? "<span class='muted'>—</span>" : fmtRate(rg)))) : "") +
@@ -1323,7 +1377,8 @@ const MAPDATA = __MAPDATA__;
   function exportSingle(){
     const r = byId.get(currentSingleId);
     if (!r) return;
-    const rows = [["年份", "GDP(亿元)", "全国排名", "增量(亿元)", "名义增长率", "实际增速"]];
+    const rankHead = (r.id === "中国") ? "世界排名" : "全国排名";
+    const rows = [["年份", "GDP(亿元)", rankHead, "增量(亿元)", "名义增长率", "实际增速"]];
     r.series.slice().sort((a, b) => b[0] - a[0]).forEach(x => {
       const y = x[0], g = x[1], inc = x[2], rate = x[3];
       const rk = rankOf(r, y, g);
@@ -1665,6 +1720,14 @@ const MAPDATA = __MAPDATA__;
     if (!isCity) {
       cards.push({ k: "实际增长率", v: (rk === null || rk === undefined || isNaN(rk)) ? "—" : fmtRate(rk), u: "", s: "不变价口径" });
     }
+    (function () {
+      const ri = rankInfoOf(r, year, g);
+      cards.push({
+        k: r.id === "中国" ? "世界排名" : (isCity ? "地级行政区排名" : "省级行政区排名"),
+        v: ri ? "第 " + ri.rank + " 位" : "—", u: "",
+        s: ri ? scopeLabel(ri) : "暂无排名数据"
+      });
+    })();
     EL.dStats.innerHTML = "";
     cards.forEach(c => {
       const d = document.createElement('div');
@@ -1679,7 +1742,7 @@ const MAPDATA = __MAPDATA__;
       animateDonut(EL.dChart, segs);
       EL.dLegend.innerHTML = segs.map((s, i) =>
         "<div><i style='background:" + s.color + "'></i>" + DETAIL_NAMES[i] + "<b>" + s.v.toFixed(1) + "%</b></div>").join("");
-      EL.dNote.innerHTML = "<span class='ln'>三次产业占比来源：分省产业结构表（按 GDP 比重，合计已缩放至 100%）。</span>"
+      EL.dNote.innerHTML = "<span class='ln'>三次产业占比来源：分省产业结构表（按 GDP 比重）。</span>"
         + (isCity ? "" : "<span class='ln warn'>实际增长率为不变价指数口径，与统计公报初步核算数可能相差 0.1—0.3 个百分点。</span>");
     } else {
       EL.dDonutCard.style.display = "none";
@@ -1768,17 +1831,13 @@ const MAPDATA = __MAPDATA__;
   }
 
   /* ---------- 主题（暗色跟随系统） ---------- */
-  const THEME_KEY = "gdp-theme";
   const themeBtn = document.getElementById("theme-btn");
   const themeBtnDetail = document.getElementById("theme-btn-detail");
+  // 不做持久化：每次打开都是浅色，除非 URL 指定 ?theme=dark
+  let currentTheme = (/[?&#]theme=(dark|light)/.exec(location.search + location.hash) || [])[1] || "light";
 
   function readTheme() {
-    try {
-      const saved = localStorage.getItem(THEME_KEY);
-      if (saved === "dark" || saved === "light") return saved;
-    } catch (e) { /* 隐私模式下忽略 */ }
-    const m = /[?&#]theme=(dark|light)/.exec(location.search + location.hash);
-    return m ? m[1] : "light";
+    return currentTheme;
   }
 
   function applyTheme() {
@@ -1791,8 +1850,7 @@ const MAPDATA = __MAPDATA__;
   }
 
   function toggleTheme() {
-    const next = readTheme() === "dark" ? "light" : "dark";
-    try { localStorage.setItem(THEME_KEY, next); } catch (e) { /* ignore */ }
+    currentTheme = (currentTheme === "dark") ? "light" : "dark";
     repaintTheme();
   }
 
@@ -1842,10 +1900,15 @@ const MAPDATA = __MAPDATA__;
     "河南省": "河南", "湖北省": "湖北", "湖南省": "湖南", "广东省": "广东", "广西壮族自治区": "广西",
     "海南省": "海南", "重庆市": "重庆", "四川省": "四川", "贵州省": "贵州", "云南省": "云南",
     "西藏自治区": "西藏", "陕西省": "陕西", "甘肃省": "甘肃", "青海省": "青海",
-    "宁夏回族自治区": "宁夏", "新疆维吾尔自治区": "新疆"
+    "宁夏回族自治区": "宁夏", "新疆维吾尔自治区": "新疆",
+    "台湾省": "__tw", "香港特别行政区": "__hm", "澳门特别行政区": "__hm"
   };
-  const OV_COLORS_LIGHT = ["#e9eefa", "#c7d7f4", "#8fb0ea", "#4a7fe0", "#1d4ed8"];
-  const OV_COLORS_DARK = ["#1c2740", "#233a5e", "#2f5ea8", "#3b82f6", "#60a5fa"];
+  const OV_NONE_LABEL = { "__tw": "台湾", "__hm": "港澳" };
+  // 中国历年 GDP 世界排名（世界银行现价美元口径）：[名次, 有数据的国家数]
+  const WORLD_RANK = {1978:[11,152],1979:[11,153],1980:[12,163],1981:[11,163],1982:[9,164],1983:[8,164],1984:[8,166],1985:[8,168],1986:[8,168],1987:[11,174],1988:[10,176],1989:[11,176],1990:[11,192],1991:[10,193],1992:[10,194],1993:[10,195],1994:[8,196],1995:[8,199],1996:[7,199],1997:[7,201],1998:[7,202],1999:[7,202],2000:[6,204],2001:[6,205],2002:[6,209],2003:[6,209],2004:[6,209],2005:[5,209],2006:[4,210],2007:[3,210],2008:[3,211],2009:[3,213],2010:[2,213],2011:[2,214],2012:[2,212],2013:[2,212],2014:[2,213],2015:[2,212],2016:[2,211],2017:[2,211],2018:[2,211],2019:[2,211],2020:[2,210],2021:[2,210],2022:[2,209],2023:[2,204],2024:[2,200],2025:[2,186]};
+
+  const OV_COLORS_LIGHT = ["#cbdaf4", "#9bb8e8", "#6590d8", "#3565c4", "#1b3f9c"];
+  const OV_COLORS_DARK = ["#24324d", "#2f4a75", "#3f6fb5", "#5b95ea", "#9ecbfb"];
   const OV_METRICS = [
     { key: "gdp", label: "GDP", unit: "亿元", hint: "2025 年 · 亿元", mapTitle: "中国省级行政区 GDP 分布",
       rankTitle: "省级 GDP 排名" },
@@ -1951,9 +2014,21 @@ const MAPDATA = __MAPDATA__;
     const insetEl = document.getElementById("ov-inset");
     const byKey = new Map(ovStats.provs.map(p => [p.id, p]));
 
+    const groups = new Map();
     MAPDATA.shapes.forEach(sh => {
       const id = GEO2ID[sh.n];
       const d = id ? byKey.get(id) : null;
+      let holder = mapEl;
+      if (id) {
+        if (!groups.has(id)) {
+          const g = document.createElementNS(NS, "g");
+          g.setAttribute("class", "prov-g");
+          g.dataset.id = id;
+          mapEl.appendChild(g);
+          groups.set(id, g);
+        }
+        holder = groups.get(id);
+      }
       const p = document.createElementNS(NS, "path");
       p.setAttribute("d", sh.d);
       p.setAttribute("class", "prov");
@@ -1966,12 +2041,13 @@ const MAPDATA = __MAPDATA__;
 
       p.addEventListener("click", () => {
         if (!id) { ovShowNone(sh.n); return; }
-        ovSelect(id);
+        ovSelect(id, "toggle");
       });
-      mapEl.appendChild(p);
+      holder.appendChild(p);
 
       const pi = document.createElementNS(NS, "path");
       pi.setAttribute("d", sh.d);
+      pi.dataset.id = id || "";
       pi.setAttribute("stroke", "#fff");
       pi.setAttribute("stroke-width", "1.2");
       insetEl.appendChild(pi);
@@ -1985,6 +2061,7 @@ const MAPDATA = __MAPDATA__;
         dot.setAttribute("fill", isDark() ? "#cbd5e1" : "#475569");
         dot.setAttribute("stroke", "#fff"); dot.setAttribute("stroke-width", "1");
         dot.setAttribute("pointer-events", "none");
+        dot.setAttribute("class", "ov-hot");
         mapEl.appendChild(dot);
       });
 
@@ -1992,11 +2069,12 @@ const MAPDATA = __MAPDATA__;
       hit.setAttribute("cx", h.x); hit.setAttribute("cy", h.y + 12);
       hit.setAttribute("rx", "34"); hit.setAttribute("ry", "30");
       hit.setAttribute("fill", "transparent");
+      hit.setAttribute("class", "ov-hot");
       hit.style.cursor = "pointer";
       const ht = document.createElementNS(NS, "title");
       ht.textContent = "香港、澳门（暂未收录）";
       hit.appendChild(ht);
-      hit.addEventListener("click", () => ovShowNone(h.label + "特别行政区"));
+      hit.addEventListener("click", () => ovSelect("__hm", "toggle"));
       mapEl.appendChild(hit);
 
       const txt = document.createElementNS(NS, "text");
@@ -2009,6 +2087,7 @@ const MAPDATA = __MAPDATA__;
       txt.setAttribute("stroke-width", "3.2");
       txt.setAttribute("paint-order", "stroke");
       txt.setAttribute("pointer-events", "none");
+      txt.setAttribute("class", "ov-hot");
       txt.textContent = h.label;
       mapEl.appendChild(txt);
     });
@@ -2054,15 +2133,7 @@ const MAPDATA = __MAPDATA__;
 
     // 地图
     const byKey = new Map(ovStats.provs.map(p => [p.id, p]));
-    document.querySelectorAll("#ov-map path.prov").forEach(p => {
-      const id = p.dataset.id;
-      const d = id ? byKey.get(id) : null;
-      p.setAttribute("fill", d ? ovColorVal(ovValue(d), bins) : (isDark() ? "#1b2434" : "#f1f4f9"));
-      const t = p.querySelector("title");
-      if (t && d) t.textContent = d.name + "：" +
-        (ovMetric === "gdp" ? ovFmt(ovValue(d), 1) + " 亿元" : ovMetricText(ovValue(d))) +
-        "（GDP 全国第 " + d.gdpRank + " 位）";
-    });
+    paintOvFills();
 
     // 插图
     document.querySelectorAll("#ov-inset path").forEach(p => {
@@ -2116,18 +2187,112 @@ const MAPDATA = __MAPDATA__;
     }).join("");
   }
 
-  function ovSelect(id) {
+  let ovFocus = false;
+
+  function ovMutedColor() {
+    return isDark() ? "#2a3547" : "#dfe6f2";
+  }
+
+  // 未收录地区（港澳台）：普通态 / 聚焦态
+  function ovNoDataColor() {
+    return isDark() ? "#1b2434" : "#f1f4f9";
+  }
+  function ovNoDataActive() {
+    return isDark() ? "#4b5c79" : "#b9c6dc";
+  }
+
+  function paintOvFills() {
+    if (!ovStats) return;
+    const bins = ovStats.bins;
+    const byKey = new Map(ovStats.provs.map(x => [x.id, x]));
+    const muted = ovMutedColor();
+    const baseOf = d => d ? ovColorVal(ovValue(d), bins) : ovNoDataColor();
+    const tipOf = d => d.name + "：" +
+      (ovMetric === "gdp" ? ovFmt(ovValue(d), 1) + " 亿元" : ovMetricText(ovValue(d))) +
+      "（GDP 全国第 " + d.gdpRank + " 位）";
+
+    document.querySelectorAll("#ov-map g.prov-g").forEach(g => {
+      const id = g.dataset.id;
+      const d = byKey.get(id);
+      g.classList.toggle("nodata", !d);
+      g.querySelectorAll("path.prov").forEach(p => {
+        p.style.fill = baseOf(d);
+        const t = p.querySelector("title");
+        if (t) {
+          if (d) t.textContent = tipOf(d);
+          else if (OV_NONE_LABEL[id]) t.textContent = OV_NONE_LABEL[id] + "（暂未收录）";
+        }
+      });
+    });
+    document.querySelectorAll("#ov-map > path.prov").forEach(p => {
+      p.style.fill = ovNoDataColor();
+    });
+    const insetEl2 = document.getElementById("ov-inset");
+    insetEl2.classList.toggle("focus", ovFocus);
+    document.querySelectorAll("#ov-inset path").forEach(p => {
+      const id = p.dataset.id;
+      if (!id) return;
+      p.classList.toggle("muted", ovFocus && id !== ovSelected);
+      const d = byKey.get(id);
+      p.style.fill = baseOf(d);
+    });
+  }
+
+  function ovSelect(id, mode) {
+    if (mode === "toggle") {
+      ovFocus = (ovSelected === id) ? !ovFocus : true;
+    } else if (mode === "focus") {
+      ovFocus = true;
+    }
     ovSelected = id;
-    document.querySelectorAll("#ov-map path.prov").forEach(p => {
+
+    const mapEl2 = document.getElementById("ov-map");
+    mapEl2.classList.toggle("focus", ovFocus);
+
+    const gSel = Array.prototype.find.call(
+      mapEl2.querySelectorAll("g.prov-g"),
+      g => g.dataset.id === id
+    );
+
+    // 遮罩层：盖住其余省份，选中省份叠在最上面
+    let dim = document.getElementById("ov-dim");
+    if (ovFocus && gSel) {
+      if (!dim) {
+        const vb = (mapEl2.getAttribute("viewBox") || "0 0 1012 746").split(/\s+/).map(Number);
+        dim = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+        dim.id = "ov-dim";
+        dim.setAttribute("x", vb[0]); dim.setAttribute("y", vb[1]);
+        dim.setAttribute("width", vb[2]); dim.setAttribute("height", vb[3]);
+        dim.setAttribute("pointer-events", "none");
+      }
+      dim.setAttribute("fill", isDark() ? "#0f1520" : "#e8edf6");
+      dim.setAttribute("opacity", isDark() ? "0.70" : "0.62");
+      const firstHot = mapEl2.querySelector(".ov-hot");
+      mapEl2.insertBefore(dim, firstHot);
+      mapEl2.insertBefore(gSel, firstHot);
+    } else if (dim) {
+      dim.remove();
+    }
+
+    mapEl2.querySelectorAll("g.prov-g").forEach(g => {
+      g.classList.toggle("sel", g.dataset.id === id);
+    });
+    mapEl2.querySelectorAll("path.prov").forEach(p => {
       p.classList.toggle("sel", p.dataset.id === id);
     });
+    paintOvFills();
+
     document.querySelectorAll("#ov-rank .ov-rankrow").forEach(r => {
       r.classList.toggle("sel", r.getAttribute("data-id") === id);
     });
     const jump = document.getElementById("ov-jump");
-    if (jump && jump.value !== id) jump.value = id;
+    if (jump && jump.value !== id) {
+      const has = Array.prototype.some.call(jump.options, o => o.value === id);
+      if (has) jump.value = id;
+    }
     const d = ovStats.provs.find(p => p.id === id);
     if (d) ovRenderPanel(d);
+    else ovShowNone(OV_NONE_LABEL[id] || id);
   }
 
   function ovShowNone(geoName) {
@@ -2198,7 +2363,14 @@ const MAPDATA = __MAPDATA__;
     const jump = document.getElementById("ov-jump");
     if (jump) {
       jump.addEventListener("change", () => {
-        if (jump.value) ovSelect(jump.value);
+        if (jump.value) ovSelect(jump.value, "focus");
+      });
+    }
+    const rankBox = document.getElementById("ov-rank");
+    if (rankBox) {
+      rankBox.addEventListener("click", e => {
+        const row = e.target.closest(".ov-rankrow");
+        if (row) ovSelect(row.getAttribute("data-id"), "focus");
       });
     }
   })();
